@@ -23,6 +23,7 @@
               placeholder="아이디를 입력하세요"
               class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               autocomplete="username"
+              required
             />
           </div>
           <div>
@@ -33,17 +34,28 @@
               placeholder="비밀번호를 입력하세요"
               class="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               autocomplete="current-password"
+              required
             />
           </div>
 
-          <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+          <!-- 오류 메시지 -->
+          <div
+            v-if="errorMsg"
+            class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600"
+          >
+            <AlertCircle :size="15" class="shrink-0" />
+            <span>{{ errorMsg }}</span>
+          </div>
 
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-2.5 px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="w-full py-2.5 px-4 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
           >
-            <span v-if="loading">로그인 중...</span>
+            <span v-if="loading" class="flex items-center justify-center gap-2">
+              <Loader2 :size="15" class="animate-spin" />
+              로그인 중...
+            </span>
             <span v-else>로그인</span>
           </button>
         </form>
@@ -55,8 +67,11 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { AlertCircle, Loader2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/api'
+import { authApi } from '@/api/auth'
+import type { AxiosError } from 'axios'
+import type { ErrorResponse } from '@/api/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -65,18 +80,20 @@ const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 const errorMsg = ref('')
 
-const handleLogin = async () => {
+async function handleLogin() {
   errorMsg.value = ''
   loading.value = true
   try {
-    const { data } = await api.post('/api/auth/login', {
+    const { data } = await authApi.login({
       username: form.username,
       password: form.password,
     })
-    authStore.setToken(data.token)
+    authStore.login(data.accessToken, form.username)
     router.push({ name: 'dashboard' })
-  } catch {
-    errorMsg.value = '아이디 또는 비밀번호가 올바르지 않습니다.'
+  } catch (err) {
+    const axiosErr = err as AxiosError<ErrorResponse>
+    errorMsg.value =
+      axiosErr.response?.data?.message ?? '로그인 중 오류가 발생했습니다.'
   } finally {
     loading.value = false
   }

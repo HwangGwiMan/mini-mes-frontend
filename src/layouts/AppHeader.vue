@@ -36,7 +36,7 @@
             {{ userInitial }}
           </div>
           <span class="text-sm font-medium text-gray-700 hidden sm:block">
-            관리자
+            {{ displayName }}
           </span>
           <ChevronDown :size="14" class="text-gray-400" />
         </button>
@@ -49,7 +49,7 @@
           >
             <div class="px-4 py-3 border-b border-gray-100">
               <p class="text-xs text-gray-500">로그인 계정</p>
-              <p class="text-sm font-medium text-gray-800 truncate">관리자</p>
+              <p class="text-sm font-medium text-gray-800 truncate">{{ displayName }}</p>
             </div>
             <div class="py-1">
               <button
@@ -81,7 +81,8 @@ const authStore = useAuthStore()
 const userMenuOpen = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
 
-const userInitial = computed(() => '관')
+const displayName = computed(() => authStore.username ?? '사용자')
+const userInitial = computed(() => (authStore.username?.[0] ?? '?').toUpperCase())
 
 // 현재 경로에 해당하는 브레드크럼 자동 생성
 const breadcrumbs = computed(() => {
