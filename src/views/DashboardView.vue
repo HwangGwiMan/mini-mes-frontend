@@ -25,11 +25,19 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { Users, Package, ListOrdered } from 'lucide-vue-next'
+import { useScreenInit } from '@/composables/useScreenInit'
+
+const { initialize } = useScreenInit()
 
 const summaryCards = [
   { key: 'partner', label: '거래처', value: '-', icon: Users, bg: 'bg-blue-50', color: 'text-blue-600' },
   { key: 'item', label: '품목', value: '-', icon: Package, bg: 'bg-emerald-50', color: 'text-emerald-600' },
   { key: 'common-code', label: '공통코드', value: '-', icon: ListOrdered, bg: 'bg-purple-50', color: 'text-purple-600' },
 ]
+
+onMounted(async () => {
+  await initialize()
+})
 </script>

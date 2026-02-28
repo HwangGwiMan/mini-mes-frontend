@@ -61,7 +61,7 @@
           >
             <component :is="item.icon" :size="18" class="shrink-0" />
             <Transition name="fade">
-              <template v-if="!collapsed">
+              <div v-if="!collapsed" class="flex flex-1 items-center justify-between min-w-0">
                 <span class="flex-1 text-left whitespace-nowrap">{{ item.label }}</span>
                 <ChevronDown
                   :size="14"
@@ -70,7 +70,7 @@
                     openGroups.has(item.key) ? 'rotate-180' : '',
                   ]"
                 />
-              </template>
+              </div>
             </Transition>
           </button>
 

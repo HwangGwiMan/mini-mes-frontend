@@ -9,3 +9,14 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { useScreenInit } from '@/composables/useScreenInit'
+
+const { initialize } = useScreenInit()
+
+onMounted(async () => {
+  await initialize()
+})
+</script>
