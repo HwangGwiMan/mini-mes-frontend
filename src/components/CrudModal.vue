@@ -29,7 +29,27 @@
                 {{ field.label }}
                 <span v-if="field.required" class="text-red-500 ml-0.5">*</span>
               </label>
+
+              <!-- select 타입 -->
+              <select
+                v-if="field.type === 'select'"
+                v-model="formData[field.key]"
+                :required="field.required"
+                class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+              >
+                <option value="">{{ field.placeholder ?? `${field.label} 선택` }}</option>
+                <option
+                  v-for="opt in field.options ?? []"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.label }}
+                </option>
+              </select>
+
+              <!-- 일반 text 타입 -->
               <input
+                v-else
                 v-model="formData[field.key]"
                 :type="field.type ?? 'text'"
                 :placeholder="field.placeholder ?? `${field.label}을(를) 입력하세요`"
@@ -83,10 +103,11 @@ import { X, AlertCircle, Loader2 } from 'lucide-vue-next'
 export interface FieldDef {
   key: string
   label: string
-  type?: string
+  type?: 'text' | 'select'
   required?: boolean
   placeholder?: string
   maxlength?: number
+  options?: { value: string; label: string }[]
 }
 
 const props = defineProps<{

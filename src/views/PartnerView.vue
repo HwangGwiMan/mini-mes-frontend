@@ -83,7 +83,7 @@
       v-model="modalOpen"
       :title="editTarget ? '거래처 수정' : '거래처 등록'"
       :fields="fields"
-      :initial-data="editTarget ? { code: editTarget.code, name: editTarget.name } : undefined"
+      :initial-data="editTarget ? toFormData(editTarget) : undefined"
       :submitting="submitting"
       :error-msg="modalError"
       @confirm="handleSave"
@@ -134,32 +134,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import CrudModal from '@/components/CrudModal.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import { partnerApi, type PartnerDto } from '@/api/partner'
+import { commonCodeApi } from '@/api/commonCode'
 
-// 컬럼 정의
+// 거래구분 공통코드 옵션 (진입 시 선조회)
+const tradeTypeOptions = ref<{ value: string; label: string }[]>([])
+
+// 컬럼 정의 (그리드에 표시할 주요 필드)
 const columnHelper = createColumnHelper<PartnerDto>()
-const columns = [
-  columnHelper.accessor('code', {
-    header: '코드',
-    enableSorting: true,
+const columns = computed(() => [
+  columnHelper.accessor('code', { header: '코드', enableSorting: true }),
+  columnHelper.accessor('name', { header: '명칭', enableSorting: true }),
+  columnHelper.accessor('tradeTypeCode', {
+    header: '거래구분',
+    enableSorting: false,
+    cell: (info) =>
+      tradeTypeOptions.value.find((o) => o.value === info.getValue())?.label ?? info.getValue() ?? '-',
   }),
-  columnHelper.accessor('name', {
-    header: '명칭',
-    enableSorting: true,
+  columnHelper.accessor('businessNumber', {
+    header: '사업자번호',
+    enableSorting: false,
+    cell: (info) => info.getValue() ?? '-',
   }),
-]
+  columnHelper.accessor('ceoName', {
+    header: '대표자명',
+    enableSorting: true,
+    cell: (info) => info.getValue() ?? '-',
+  }),
+  columnHelper.accessor('phone1', {
+    header: '연락처',
+    enableSorting: false,
+    cell: (info) => info.getValue() ?? '-',
+  }),
+])
 
-// 폼 필드 정의
-const fields: FieldDef[] = [
-  { key: 'code', label: '코드', required: true, maxlength: 50, placeholder: '거래처 코드' },
-  { key: 'name', label: '명칭', required: true, maxlength: 100, placeholder: '거래처 명칭' },
-]
+// 모달 폼 필드 정의 (거래구분은 선조회 옵션을 동적 주입)
+const fields = computed<FieldDef[]>(() => [
+  { key: 'code',           label: '코드',       required: true,  maxlength: 50,  placeholder: '거래처 코드' },
+  { key: 'name',           label: '명칭',       required: true,  maxlength: 100, placeholder: '거래처 명칭' },
+  {
+    key: 'tradeTypeCode',
+    label: '거래구분',
+    type: 'select',
+    required: false,
+    placeholder: '거래구분 선택',
+    options: tradeTypeOptions.value,
+  },
+  { key: 'businessNumber', label: '사업자번호', required: false, maxlength: 20,  placeholder: '123-45-67890' },
+  { key: 'ceoName',        label: '대표자명',  required: false, maxlength: 50,  placeholder: '대표자명' },
+  { key: 'address',        label: '주소',       required: false, maxlength: 200, placeholder: '주소' },
+  { key: 'phone1',         label: '연락처1',   required: false, maxlength: 20,  placeholder: '02-1234-5678' },
+  { key: 'phone2',         label: '연락처2',   required: false, maxlength: 20,  placeholder: '010-1234-5678' },
+])
 
 // 상태
 const partners = ref<PartnerDto[]>([])
@@ -172,7 +204,20 @@ const deleteTarget = ref<PartnerDto | null>(null)
 
 const search = reactive({ code: '', name: '' })
 
-// 데이터 조회
+// PartnerDto → 폼 데이터 변환
+function toFormData(dto: PartnerDto): Record<string, string> {
+  return {
+    code:           dto.code ?? '',
+    name:           dto.name ?? '',
+    tradeTypeCode:  dto.tradeTypeCode ?? '',
+    businessNumber: dto.businessNumber ?? '',
+    ceoName:        dto.ceoName ?? '',
+    address:        dto.address ?? '',
+    phone1:         dto.phone1 ?? '',
+    phone2:         dto.phone2 ?? '',
+  }
+}
+
 async function fetchData() {
   loading.value = true
   try {
@@ -192,46 +237,52 @@ function resetSearch() {
   fetchData()
 }
 
-// 등록 모달 열기
 function openCreate() {
   editTarget.value = null
   modalError.value = ''
   modalOpen.value = true
 }
 
-// 수정 모달 열기
 function openEdit(row: PartnerDto) {
   editTarget.value = row
   modalError.value = ''
   modalOpen.value = true
 }
 
-// 저장 처리 (등록/수정 공통)
 async function handleSave(data: Record<string, string>) {
   submitting.value = true
   modalError.value = ''
   try {
+    const payload = {
+      code:           data.code,
+      name:           data.name,
+      tradeTypeCode:  data.tradeTypeCode || undefined,
+      businessNumber: data.businessNumber || undefined,
+      ceoName:        data.ceoName || undefined,
+      address:        data.address || undefined,
+      phone1:         data.phone1 || undefined,
+      phone2:         data.phone2 || undefined,
+    }
     if (editTarget.value) {
-      await partnerApi.update(editTarget.value.id, { code: data.code, name: data.name })
+      await partnerApi.update(editTarget.value.id, payload)
     } else {
-      await partnerApi.create({ code: data.code, name: data.name })
+      await partnerApi.create(payload)
     }
     modalOpen.value = false
     await fetchData()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    modalError.value = e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
+    const e = err as { response?: { data?: { message?: string; errors?: { field: string; message: string }[] } } }
+    const firstFieldError = e.response?.data?.errors?.[0]?.message
+    modalError.value = firstFieldError ?? e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
   } finally {
     submitting.value = false
   }
 }
 
-// 삭제 확인 다이얼로그
 function confirmDelete(row: PartnerDto) {
   deleteTarget.value = row
 }
 
-// 삭제 처리
 async function handleDelete() {
   if (!deleteTarget.value) return
   submitting.value = true
@@ -244,7 +295,11 @@ async function handleDelete() {
   }
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+  const { data } = await commonCodeApi.search('TRADE_TYPE')
+  tradeTypeOptions.value = data.map((c) => ({ value: c.code, label: c.name }))
+  await fetchData()
+})
 </script>
 
 <style scoped>

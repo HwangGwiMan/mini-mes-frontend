@@ -4,11 +4,23 @@ export interface PartnerDto {
   id: number
   code: string
   name: string
+  businessNumber: string | null
+  ceoName: string | null
+  address: string | null
+  phone1: string | null
+  phone2: string | null
+  tradeTypeCode: string | null
 }
 
 export interface PartnerRequest {
   code: string
   name: string
+  businessNumber?: string
+  ceoName?: string
+  address?: string
+  phone1?: string
+  phone2?: string
+  tradeTypeCode?: string
 }
 
 export interface PartnerSearchParams {
