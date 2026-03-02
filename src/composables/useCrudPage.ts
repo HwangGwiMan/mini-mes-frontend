@@ -1,8 +1,8 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import type { Ref } from 'vue'
 
 interface UseCrudPageOptions<TDto extends { id: number; name: string }, TReq> {
-  fetchFn: (params?: { code?: string; name?: string }) => Promise<{ data: TDto[] }>
+  fetchFn: () => Promise<{ data: TDto[] }>
   createFn: (data: TReq) => Promise<unknown>
   updateFn: (id: number, data: TReq) => Promise<unknown>
   deleteFn: (id: number) => Promise<unknown>
@@ -21,25 +21,15 @@ export function useCrudPage<TDto extends { id: number; name: string }, TReq>(
   const modalError = ref('')
   const editTarget = ref<TDto | null>(null) as Ref<TDto | null>
   const deleteTarget = ref<TDto | null>(null) as Ref<TDto | null>
-  const search = reactive({ code: '', name: '' })
 
   async function fetchData() {
     loading.value = true
     try {
-      const { data } = await fetchFn({
-        code: search.code || undefined,
-        name: search.name || undefined,
-      })
+      const { data } = await fetchFn()
       rows.value = data
     } finally {
       loading.value = false
     }
-  }
-
-  function resetSearch() {
-    search.code = ''
-    search.name = ''
-    fetchData()
   }
 
   function openCreate() {
@@ -102,9 +92,7 @@ export function useCrudPage<TDto extends { id: number; name: string }, TReq>(
     modalError,
     editTarget,
     deleteTarget,
-    search,
     fetchData,
-    resetSearch,
     openCreate,
     openEdit,
     handleSave,

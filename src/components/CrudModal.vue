@@ -47,14 +47,15 @@
                 </option>
               </select>
 
-              <!-- 일반 text 타입 -->
+              <!-- text / number 타입 -->
               <input
                 v-else
                 v-model="formData[field.key]"
                 :type="field.type ?? 'text'"
                 :placeholder="field.placeholder ?? `${field.label}을(를) 입력하세요`"
                 :required="field.required"
-                :maxlength="field.maxlength"
+                :maxlength="field.type === 'number' ? undefined : field.maxlength"
+                :min="field.min"
                 class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
@@ -103,10 +104,11 @@ import { X, AlertCircle, Loader2 } from 'lucide-vue-next'
 export interface FieldDef {
   key: string
   label: string
-  type?: 'text' | 'select'
+  type?: 'text' | 'number' | 'select'
   required?: boolean
   placeholder?: string
   maxlength?: number
+  min?: number
   options?: { value: string; label: string }[]
 }
 

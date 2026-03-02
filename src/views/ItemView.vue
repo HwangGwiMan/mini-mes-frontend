@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
@@ -115,6 +115,9 @@ import { useCrudPage } from '@/composables/useCrudPage'
 
 const { initialize } = useScreenInit()
 
+// 검색 조건
+const search = reactive({ code: '', name: '' })
+
 // 공통 CRUD 상태 및 함수
 const {
   rows: items,
@@ -124,21 +127,29 @@ const {
   modalError,
   editTarget,
   deleteTarget,
-  search,
   fetchData,
-  resetSearch,
   openCreate,
   openEdit,
   handleSave,
   confirmDelete,
   handleDelete,
 } = useCrudPage<ItemDto, ItemRequest>({
-  fetchFn: (params) => itemApi.getAll(params),
-  createFn: (data) => itemApi.create(data),
-  updateFn: (id, data) => itemApi.update(id, data),
-  deleteFn: (id) => itemApi.delete(id),
+  fetchFn: () =>
+    itemApi.getAll({
+      code: search.code || undefined,
+      name: search.name || undefined,
+    }),
+  createFn: (data: ItemRequest) => itemApi.create(data),
+  updateFn: (id: number, data: ItemRequest) => itemApi.update(id, data),
+  deleteFn: (id: number) => itemApi.delete(id),
   toPayload: (data) => ({ code: data.code, name: data.name }),
 })
+
+function resetSearch() {
+  search.code = ''
+  search.name = ''
+  fetchData()
+}
 
 // 컬럼 정의
 const columnHelper = createColumnHelper<ItemDto>()

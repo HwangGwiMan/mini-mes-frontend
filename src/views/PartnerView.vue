@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
@@ -119,6 +119,9 @@ const { initialize } = useScreenInit()
 // 거래구분 공통코드 옵션 (진입 시 선조회)
 const tradeTypeOptions = ref<{ value: string; label: string }[]>([])
 
+// 검색 조건
+const search = reactive({ code: '', name: '' })
+
 // 공통 CRUD 상태 및 함수
 const {
   rows: partners,
@@ -128,21 +131,29 @@ const {
   modalError,
   editTarget,
   deleteTarget,
-  search,
   fetchData,
-  resetSearch,
   openCreate,
   openEdit,
   handleSave,
   confirmDelete,
   handleDelete,
 } = useCrudPage<PartnerDto, ReturnType<typeof buildPayload>>({
-  fetchFn: (params) => partnerApi.getAll(params),
-  createFn: (data) => partnerApi.create(data),
-  updateFn: (id, data) => partnerApi.update(id, data),
-  deleteFn: (id) => partnerApi.delete(id),
+  fetchFn: () =>
+    partnerApi.getAll({
+      code: search.code || undefined,
+      name: search.name || undefined,
+    }),
+  createFn: (data: ReturnType<typeof buildPayload>) => partnerApi.create(data),
+  updateFn: (id: number, data: ReturnType<typeof buildPayload>) => partnerApi.update(id, data),
+  deleteFn: (id: number) => partnerApi.delete(id),
   toPayload: buildPayload,
 })
+
+function resetSearch() {
+  search.code = ''
+  search.name = ''
+  fetchData()
+}
 
 function buildPayload(data: Record<string, string>) {
   return {
@@ -212,7 +223,7 @@ function toFormData(dto: PartnerDto): Record<string, string> {
 onMounted(async () => {
   await initialize()
   const { data } = await commonCodeApi.search('TRADE_TYPE')
-  tradeTypeOptions.value = data.map((c) => ({ value: c.code, label: c.name }))
+  tradeTypeOptions.value = data.map((c: { code: string; name: string }) => ({ value: c.code, label: c.name }))
   await fetchData()
 })
 </script>

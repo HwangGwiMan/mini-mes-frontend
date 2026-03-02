@@ -60,7 +60,7 @@ src/
     ├── DashboardView.vue    # 대시보드
     ├── PartnerView.vue      # 거래처 관리
     ├── ItemView.vue         # 품목 관리
-    └── CommonCodeView.vue   # 공통코드 관리 (개발 중)
+    └── CommonCodeView.vue   # 공통코드 관리
 ```
 
 ---
@@ -138,10 +138,11 @@ src/
 interface FieldDef {
   key: string
   label: string
-  type?: 'text' | 'select'   // 기본값: 'text'
+  type?: 'text' | 'number' | 'select'  // 기본값: 'text'
   required?: boolean
   placeholder?: string
   maxlength?: number
+  min?: number                          // type='number' 전용
   options?: { value: string; label: string }[]  // type='select' 전용
 }
 ```
@@ -197,10 +198,12 @@ interface SearchFieldDef {
 
 CRUD 화면의 공통 상태와 함수를 제공합니다. `TDto`는 반드시 `id: number`와 `name: string` 필드를 가져야 합니다.
 
+**`fetchFn`은 파라미터 없는 클로저로 전달합니다.** 각 뷰에서 검색 상태를 직접 관리하고 캡처합니다.
+
 **옵션**
 ```typescript
 {
-  fetchFn:   (params?) => Promise<{ data: TDto[] }>
+  fetchFn:   () => Promise<{ data: TDto[] }>   // 외부 search 객체를 클로저로 캡처
   createFn:  (data: TReq) => Promise<unknown>
   updateFn:  (id: number, data: TReq) => Promise<unknown>
   deleteFn:  (id: number) => Promise<unknown>
@@ -218,17 +221,23 @@ modalOpen     // CrudModal 열림 여부 (v-model 연결)
 modalError    // 모달 오류 메시지
 editTarget    // 수정 대상 (null이면 등록 모드)
 deleteTarget  // 삭제 확인 대상
-search        // reactive({ code: '', name: '' })
 
 // 함수
 fetchData()        // 목록 조회
-resetSearch()      // 검색 초기화 + 재조회
 openCreate()       // 등록 모달 열기
 openEdit(row)      // 수정 모달 열기
 handleSave(data)   // 저장 처리 (등록/수정 자동 분기)
 confirmDelete(row) // 삭제 확인 대상 지정
 handleDelete()     // 삭제 처리
 ```
+
+> `search` 와 `resetSearch`는 composable이 제공하지 않습니다. 각 뷰에서 직접 정의하세요.
+>
+> ```typescript
+> // 뷰 컴포넌트에서 직접 관리
+> const search = reactive({ code: '', name: '' })
+> function resetSearch() { search.code = ''; search.name = ''; fetchData() }
+> ```
 
 ---
 
