@@ -16,45 +16,12 @@
     </div>
 
     <!-- 검색 영역 -->
-    <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <div class="flex flex-wrap items-end gap-3">
-        <div class="flex flex-col gap-1.5 min-w-36">
-          <label class="text-xs font-medium text-gray-600">코드</label>
-          <input
-            v-model="search.code"
-            type="text"
-            placeholder="코드 검색"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            @keyup.enter="fetchData"
-          />
-        </div>
-        <div class="flex flex-col gap-1.5 min-w-36">
-          <label class="text-xs font-medium text-gray-600">명칭</label>
-          <input
-            v-model="search.name"
-            type="text"
-            placeholder="명칭 검색"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            @keyup.enter="fetchData"
-          />
-        </div>
-        <div class="flex gap-2">
-          <button
-            @click="fetchData"
-            class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            <Search :size="14" />
-            검색
-          </button>
-          <button
-            @click="resetSearch"
-            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            초기화
-          </button>
-        </div>
-      </div>
-    </div>
+    <SearchBar
+      :model-value="search"
+      :fields="searchFields"
+      @search="fetchData"
+      @reset="resetSearch"
+    />
 
     <!-- 그리드 -->
     <DataTable :data="items" :columns="columns" :loading="loading" table-id="item">
@@ -135,11 +102,13 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { Plus, Search, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import CrudModal from '@/components/CrudModal.vue'
+import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
+import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { itemApi, type ItemDto, type ItemRequest } from '@/api/item'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
@@ -176,6 +145,12 @@ const columnHelper = createColumnHelper<ItemDto>()
 const columns = [
   columnHelper.accessor('code', { header: '코드', enableSorting: true }),
   columnHelper.accessor('name', { header: '명칭', enableSorting: true }),
+]
+
+// 검색 필드 정의
+const searchFields: SearchFieldDef[] = [
+  { key: 'code', label: '코드', placeholder: '코드 검색' },
+  { key: 'name', label: '명칭', placeholder: '명칭 검색' },
 ]
 
 // 모달 폼 필드 정의
