@@ -5,6 +5,7 @@ import {
   Users,
   Package,
   ListOrdered,
+  Workflow,
   Settings,
 } from 'lucide-vue-next'
 
@@ -53,6 +54,13 @@ export const menus: MenuItem[] = [
         label: '품목 관리',
         path: '/item',
         icon: Package,
+      },
+      {
+        type: 'leaf',
+        key: 'process',
+        label: '공정 관리',
+        path: '/process',
+        icon: Workflow,
       },
       {
         type: 'leaf',

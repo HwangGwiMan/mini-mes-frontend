@@ -31,6 +31,11 @@ const router = createRouter({
           component: () => import('@/views/ItemView.vue'),
         },
         {
+          path: 'process',
+          name: 'process',
+          component: () => import('@/views/ProcessView.vue'),
+        },
+        {
           path: 'common-code',
           name: 'common-code',
           component: () => import('@/views/CommonCodeView.vue'),
