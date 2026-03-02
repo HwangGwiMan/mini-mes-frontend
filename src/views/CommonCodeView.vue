@@ -214,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
@@ -352,7 +352,6 @@ async function handleSaveCode(formData: Record<string, string>) {
   try {
     const payload: CommonCodeRequest = {
       codeGroup: selectedGroup.value.groupCode,
-      code: formData.code,
       name: formData.name,
       sortOrder: parseInt(formData.sortOrder) || 0,
     }
@@ -398,11 +397,19 @@ const groupFields: FieldDef[] = [
   { key: 'sortOrder', label: '정렬순서', type: 'number',  required: true, min: 0, placeholder: '0' },
 ]
 
-const codeFields: FieldDef[] = [
-  { key: 'code',      label: '코드',     required: true,  maxlength: 50,  placeholder: '01' },
-  { key: 'name',      label: '코드명',   required: true,  maxlength: 100, placeholder: '코드 명칭' },
-  { key: 'sortOrder', label: '정렬순서', type: 'number',  required: true, min: 0, placeholder: '0' },
-]
+const codeFields = computed<FieldDef[]>(() => {
+  if (codeEditTarget.value) {
+    return [
+      { key: 'code',      label: '코드',     readonly: true },
+      { key: 'name',      label: '코드명',   required: true, maxlength: 100, placeholder: '코드 명칭' },
+      { key: 'sortOrder', label: '정렬순서', type: 'number', required: true, min: 0, placeholder: '0' },
+    ]
+  }
+  return [
+    { key: 'name',      label: '코드명',   required: true, maxlength: 100, placeholder: '코드 명칭' },
+    { key: 'sortOrder', label: '정렬순서', type: 'number', required: true, min: 0, placeholder: '0' },
+  ]
+})
 
 // ── 폼 초기값 변환 ────────────────────────────────────────────────
 function toGroupFormData(dto: CodeGroupDto): Record<string, string> {

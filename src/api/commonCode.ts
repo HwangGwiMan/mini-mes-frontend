@@ -10,7 +10,6 @@ export interface CommonCodeDto {
 
 export interface CommonCodeRequest {
   codeGroup: string
-  code: string
   name: string
   sortOrder: number
 }

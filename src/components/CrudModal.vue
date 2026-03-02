@@ -30,9 +30,17 @@
                 <span v-if="field.required" class="text-red-500 ml-0.5">*</span>
               </label>
 
+              <!-- readonly 필드 -->
+              <div
+                v-if="field.readonly"
+                class="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-500 select-all"
+              >
+                {{ formData[field.key] || '—' }}
+              </div>
+
               <!-- select 타입 -->
               <select
-                v-if="field.type === 'select'"
+                v-else-if="field.type === 'select'"
                 v-model="formData[field.key]"
                 :required="field.required"
                 class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
@@ -105,6 +113,7 @@ export interface FieldDef {
   key: string
   label: string
   type?: 'text' | 'number' | 'select'
+  readonly?: boolean
   required?: boolean
   placeholder?: string
   maxlength?: number
