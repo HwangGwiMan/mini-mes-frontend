@@ -134,118 +134,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { Plus, Search, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import CrudModal from '@/components/CrudModal.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
-import { itemApi, type ItemDto } from '@/api/item'
+import { itemApi, type ItemDto, type ItemRequest } from '@/api/item'
 import { useScreenInit } from '@/composables/useScreenInit'
+import { useCrudPage } from '@/composables/useCrudPage'
 
 const { initialize } = useScreenInit()
+
+// 공통 CRUD 상태 및 함수
+const {
+  rows: items,
+  loading,
+  submitting,
+  modalOpen,
+  modalError,
+  editTarget,
+  deleteTarget,
+  search,
+  fetchData,
+  resetSearch,
+  openCreate,
+  openEdit,
+  handleSave,
+  confirmDelete,
+  handleDelete,
+} = useCrudPage<ItemDto, ItemRequest>({
+  fetchFn: (params) => itemApi.getAll(params),
+  createFn: (data) => itemApi.create(data),
+  updateFn: (id, data) => itemApi.update(id, data),
+  deleteFn: (id) => itemApi.delete(id),
+  toPayload: (data) => ({ code: data.code, name: data.name }),
+})
 
 // 컬럼 정의
 const columnHelper = createColumnHelper<ItemDto>()
 const columns = [
-  columnHelper.accessor('code', {
-    header: '코드',
-    enableSorting: true,
-  }),
-  columnHelper.accessor('name', {
-    header: '명칭',
-    enableSorting: true,
-  }),
+  columnHelper.accessor('code', { header: '코드', enableSorting: true }),
+  columnHelper.accessor('name', { header: '명칭', enableSorting: true }),
 ]
 
-// 폼 필드 정의
+// 모달 폼 필드 정의
 const fields: FieldDef[] = [
-  { key: 'code', label: '코드', required: true, maxlength: 50, placeholder: '품목 코드' },
+  { key: 'code', label: '코드', required: true, maxlength: 50,  placeholder: '품목 코드' },
   { key: 'name', label: '명칭', required: true, maxlength: 100, placeholder: '품목 명칭' },
 ]
-
-// 상태
-const items = ref<ItemDto[]>([])
-const loading = ref(false)
-const submitting = ref(false)
-const modalOpen = ref(false)
-const modalError = ref('')
-const editTarget = ref<ItemDto | null>(null)
-const deleteTarget = ref<ItemDto | null>(null)
-
-const search = reactive({ code: '', name: '' })
-
-// 데이터 조회
-async function fetchData() {
-  loading.value = true
-  try {
-    const { data } = await itemApi.getAll({
-      code: search.code || undefined,
-      name: search.name || undefined,
-    })
-    items.value = data
-  } finally {
-    loading.value = false
-  }
-}
-
-function resetSearch() {
-  search.code = ''
-  search.name = ''
-  fetchData()
-}
-
-// 등록 모달 열기
-function openCreate() {
-  editTarget.value = null
-  modalError.value = ''
-  modalOpen.value = true
-}
-
-// 수정 모달 열기
-function openEdit(row: ItemDto) {
-  editTarget.value = row
-  modalError.value = ''
-  modalOpen.value = true
-}
-
-// 저장 처리
-async function handleSave(data: Record<string, string>) {
-  submitting.value = true
-  modalError.value = ''
-  try {
-    if (editTarget.value) {
-      await itemApi.update(editTarget.value.id, { code: data.code, name: data.name })
-    } else {
-      await itemApi.create({ code: data.code, name: data.name })
-    }
-    modalOpen.value = false
-    await fetchData()
-  } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    modalError.value = e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
-  } finally {
-    submitting.value = false
-  }
-}
-
-// 삭제 확인 다이얼로그
-function confirmDelete(row: ItemDto) {
-  deleteTarget.value = row
-}
-
-// 삭제 처리
-async function handleDelete() {
-  if (!deleteTarget.value) return
-  submitting.value = true
-  try {
-    await itemApi.delete(deleteTarget.value.id)
-    deleteTarget.value = null
-    await fetchData()
-  } finally {
-    submitting.value = false
-  }
-}
 
 onMounted(async () => {
   await initialize()

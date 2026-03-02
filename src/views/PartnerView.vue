@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus, Search, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
@@ -143,18 +143,57 @@ import type { FieldDef } from '@/components/CrudModal.vue'
 import { partnerApi, type PartnerDto } from '@/api/partner'
 import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
+import { useCrudPage } from '@/composables/useCrudPage'
 
 const { initialize } = useScreenInit()
 
 // 거래구분 공통코드 옵션 (진입 시 선조회)
 const tradeTypeOptions = ref<{ value: string; label: string }[]>([])
 
-// 컬럼 정의 (그리드에 표시할 주요 필드)
+// 공통 CRUD 상태 및 함수
+const {
+  rows: partners,
+  loading,
+  submitting,
+  modalOpen,
+  modalError,
+  editTarget,
+  deleteTarget,
+  search,
+  fetchData,
+  resetSearch,
+  openCreate,
+  openEdit,
+  handleSave,
+  confirmDelete,
+  handleDelete,
+} = useCrudPage<PartnerDto, ReturnType<typeof buildPayload>>({
+  fetchFn: (params) => partnerApi.getAll(params),
+  createFn: (data) => partnerApi.create(data),
+  updateFn: (id, data) => partnerApi.update(id, data),
+  deleteFn: (id) => partnerApi.delete(id),
+  toPayload: buildPayload,
+})
+
+function buildPayload(data: Record<string, string>) {
+  return {
+    code:           data.code,
+    name:           data.name,
+    tradeTypeCode:  data.tradeTypeCode  || undefined,
+    businessNumber: data.businessNumber || undefined,
+    ceoName:        data.ceoName        || undefined,
+    address:        data.address        || undefined,
+    phone1:         data.phone1         || undefined,
+    phone2:         data.phone2         || undefined,
+  }
+}
+
+// 컬럼 정의
 const columnHelper = createColumnHelper<PartnerDto>()
 const columns = computed(() => [
-  columnHelper.accessor('code', { header: '코드', enableSorting: true }),
-  columnHelper.accessor('name', { header: '명칭', enableSorting: true }),
-  columnHelper.accessor('tradeTypeCode', {
+  columnHelper.accessor('code',           { header: '코드',     enableSorting: true }),
+  columnHelper.accessor('name',           { header: '명칭',     enableSorting: true }),
+  columnHelper.accessor('tradeTypeCode',  {
     header: '거래구분',
     enableSorting: false,
     cell: (info) =>
@@ -165,30 +204,15 @@ const columns = computed(() => [
     enableSorting: false,
     cell: (info) => info.getValue() ?? '-',
   }),
-  columnHelper.accessor('ceoName', {
-    header: '대표자명',
-    enableSorting: true,
-    cell: (info) => info.getValue() ?? '-',
-  }),
-  columnHelper.accessor('phone1', {
-    header: '연락처',
-    enableSorting: false,
-    cell: (info) => info.getValue() ?? '-',
-  }),
+  columnHelper.accessor('ceoName',  { header: '대표자명', enableSorting: true,  cell: (info) => info.getValue() ?? '-' }),
+  columnHelper.accessor('phone1',   { header: '연락처',   enableSorting: false, cell: (info) => info.getValue() ?? '-' }),
 ])
 
-// 모달 폼 필드 정의 (거래구분은 선조회 옵션을 동적 주입)
+// 모달 폼 필드 (거래구분 옵션은 동적 주입)
 const fields = computed<FieldDef[]>(() => [
   { key: 'code',           label: '코드',       required: true,  maxlength: 50,  placeholder: '거래처 코드' },
   { key: 'name',           label: '명칭',       required: true,  maxlength: 100, placeholder: '거래처 명칭' },
-  {
-    key: 'tradeTypeCode',
-    label: '거래구분',
-    type: 'select',
-    required: false,
-    placeholder: '거래구분 선택',
-    options: tradeTypeOptions.value,
-  },
+  { key: 'tradeTypeCode',  label: '거래구분',   type: 'select',  required: false, placeholder: '거래구분 선택', options: tradeTypeOptions.value },
   { key: 'businessNumber', label: '사업자번호', required: false, maxlength: 20,  placeholder: '123-45-67890' },
   { key: 'ceoName',        label: '대표자명',  required: false, maxlength: 50,  placeholder: '대표자명' },
   { key: 'address',        label: '주소',       required: false, maxlength: 200, placeholder: '주소' },
@@ -196,105 +220,17 @@ const fields = computed<FieldDef[]>(() => [
   { key: 'phone2',         label: '연락처2',   required: false, maxlength: 20,  placeholder: '010-1234-5678' },
 ])
 
-// 상태
-const partners = ref<PartnerDto[]>([])
-const loading = ref(false)
-const submitting = ref(false)
-const modalOpen = ref(false)
-const modalError = ref('')
-const editTarget = ref<PartnerDto | null>(null)
-const deleteTarget = ref<PartnerDto | null>(null)
-
-const search = reactive({ code: '', name: '' })
-
-// PartnerDto → 폼 데이터 변환
+// PartnerDto → 모달 초기값 변환
 function toFormData(dto: PartnerDto): Record<string, string> {
   return {
-    code:           dto.code ?? '',
-    name:           dto.name ?? '',
-    tradeTypeCode:  dto.tradeTypeCode ?? '',
+    code:           dto.code           ?? '',
+    name:           dto.name           ?? '',
+    tradeTypeCode:  dto.tradeTypeCode  ?? '',
     businessNumber: dto.businessNumber ?? '',
-    ceoName:        dto.ceoName ?? '',
-    address:        dto.address ?? '',
-    phone1:         dto.phone1 ?? '',
-    phone2:         dto.phone2 ?? '',
-  }
-}
-
-async function fetchData() {
-  loading.value = true
-  try {
-    const { data } = await partnerApi.getAll({
-      code: search.code || undefined,
-      name: search.name || undefined,
-    })
-    partners.value = data
-  } finally {
-    loading.value = false
-  }
-}
-
-function resetSearch() {
-  search.code = ''
-  search.name = ''
-  fetchData()
-}
-
-function openCreate() {
-  editTarget.value = null
-  modalError.value = ''
-  modalOpen.value = true
-}
-
-function openEdit(row: PartnerDto) {
-  editTarget.value = row
-  modalError.value = ''
-  modalOpen.value = true
-}
-
-async function handleSave(data: Record<string, string>) {
-  submitting.value = true
-  modalError.value = ''
-  try {
-    const payload = {
-      code:           data.code,
-      name:           data.name,
-      tradeTypeCode:  data.tradeTypeCode || undefined,
-      businessNumber: data.businessNumber || undefined,
-      ceoName:        data.ceoName || undefined,
-      address:        data.address || undefined,
-      phone1:         data.phone1 || undefined,
-      phone2:         data.phone2 || undefined,
-    }
-    if (editTarget.value) {
-      await partnerApi.update(editTarget.value.id, payload)
-    } else {
-      await partnerApi.create(payload)
-    }
-    modalOpen.value = false
-    await fetchData()
-  } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string; errors?: { field: string; message: string }[] } } }
-    const firstFieldError = e.response?.data?.errors?.[0]?.message
-    modalError.value = firstFieldError ?? e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
-  } finally {
-    submitting.value = false
-  }
-}
-
-function confirmDelete(row: PartnerDto) {
-  deleteTarget.value = row
-}
-
-async function handleDelete() {
-  if (!deleteTarget.value) return
-  submitting.value = true
-  try {
-    await partnerApi.delete(deleteTarget.value.id)
-    deleteTarget.value = null
-    await fetchData()
-  } finally {
-    submitting.value = false
+    ceoName:        dto.ceoName        ?? '',
+    address:        dto.address        ?? '',
+    phone1:         dto.phone1         ?? '',
+    phone2:         dto.phone2         ?? '',
   }
 }
 
