@@ -57,7 +57,7 @@
     </div>
 
     <!-- 그리드 -->
-    <DataTable :data="items" :columns="columns" :loading="loading">
+    <DataTable :data="items" :columns="columns" :loading="loading" table-id="item">
       <template #actions="{ row }">
         <div class="flex items-center gap-1.5">
           <button
