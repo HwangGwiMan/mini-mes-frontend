@@ -142,6 +142,9 @@ import CrudModal from '@/components/CrudModal.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import { partnerApi, type PartnerDto } from '@/api/partner'
 import { commonCodeApi } from '@/api/commonCode'
+import { useScreenInit } from '@/composables/useScreenInit'
+
+const { initialize } = useScreenInit()
 
 // 거래구분 공통코드 옵션 (진입 시 선조회)
 const tradeTypeOptions = ref<{ value: string; label: string }[]>([])
@@ -296,6 +299,7 @@ async function handleDelete() {
 }
 
 onMounted(async () => {
+  await initialize()
   const { data } = await commonCodeApi.search('TRADE_TYPE')
   tradeTypeOptions.value = data.map((c) => ({ value: c.code, label: c.name }))
   await fetchData()

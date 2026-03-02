@@ -141,6 +141,9 @@ import DataTable from '@/components/DataTable.vue'
 import CrudModal from '@/components/CrudModal.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import { itemApi, type ItemDto } from '@/api/item'
+import { useScreenInit } from '@/composables/useScreenInit'
+
+const { initialize } = useScreenInit()
 
 // 컬럼 정의
 const columnHelper = createColumnHelper<ItemDto>()
@@ -244,7 +247,10 @@ async function handleDelete() {
   }
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+  await initialize()
+  await fetchData()
+})
 </script>
 
 <style scoped>
