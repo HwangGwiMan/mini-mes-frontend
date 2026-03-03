@@ -112,7 +112,7 @@ import { X, AlertCircle, Loader2 } from 'lucide-vue-next'
 export interface FieldDef {
   key: string
   label: string
-  type?: 'text' | 'number' | 'select'
+  type?: 'text' | 'number' | 'select' | 'date'
   readonly?: boolean
   required?: boolean
   placeholder?: string

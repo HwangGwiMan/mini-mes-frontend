@@ -36,6 +36,11 @@ const router = createRouter({
           component: () => import('@/views/ProcessView.vue'),
         },
         {
+          path: 'employee',
+          name: 'employee',
+          component: () => import('@/views/EmployeeView.vue'),
+        },
+        {
           path: 'common-code',
           name: 'common-code',
           component: () => import('@/views/CommonCodeView.vue'),

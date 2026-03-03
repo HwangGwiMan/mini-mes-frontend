@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Database,
   Users,
+  UserRound,
   Package,
   ListOrdered,
   Workflow,
@@ -61,6 +62,13 @@ export const menus: MenuItem[] = [
         label: '공정 관리',
         path: '/process',
         icon: Workflow,
+      },
+      {
+        type: 'leaf',
+        key: 'employee',
+        label: '사원 관리',
+        path: '/employee',
+        icon: UserRound,
       },
       {
         type: 'leaf',

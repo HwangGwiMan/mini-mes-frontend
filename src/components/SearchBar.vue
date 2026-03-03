@@ -7,7 +7,17 @@
         class="flex flex-col gap-1.5 min-w-36"
       >
         <label class="text-xs font-medium text-gray-600">{{ field.label }}</label>
+        <select
+          v-if="field.type === 'select' && field.options"
+          :value="modelValue[field.key]"
+          @change="onInput(field.key, ($event.target as HTMLSelectElement).value)"
+          class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white min-w-36"
+        >
+          <option value="">{{ field.placeholder ?? '전체' }}</option>
+          <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
         <input
+          v-else
           :value="modelValue[field.key]"
           @input="onInput(field.key, ($event.target as HTMLInputElement).value)"
           type="text"
@@ -43,6 +53,8 @@ export interface SearchFieldDef {
   key: string
   label: string
   placeholder?: string
+  type?: 'text' | 'select'
+  options?: { value: string; label: string }[]
 }
 
 const props = defineProps<{
