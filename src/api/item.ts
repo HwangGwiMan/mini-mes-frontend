@@ -4,11 +4,23 @@ export interface ItemDto {
   id: number
   code: string
   name: string
+  itemTypeCode: string
+  unit: string
+  spec: string
+  description: string
+  useYn: boolean
+  sortOrder: number
 }
 
 export interface ItemRequest {
   code: string
   name: string
+  itemTypeCode: string
+  unit: string
+  spec: string
+  description: string
+  useYn: boolean
+  sortOrder: number
 }
 
 export interface ItemSearchParams {
