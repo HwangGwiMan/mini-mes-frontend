@@ -45,6 +45,36 @@ const router = createRouter({
           name: 'common-code',
           component: () => import('@/views/CommonCodeView.vue'),
         },
+        {
+          path: 'quote',
+          name: 'quote',
+          component: () => import('@/views/QuoteView.vue'),
+        },
+        {
+          path: 'order',
+          name: 'order',
+          component: () => import('@/views/OrderView.vue'),
+        },
+        {
+          path: 'price',
+          name: 'price',
+          component: () => import('@/views/PriceView.vue'),
+        },
+        {
+          path: 'shipment',
+          name: 'shipment',
+          component: () => import('@/views/ShipmentView.vue'),
+        },
+        {
+          path: 'revenue',
+          name: 'revenue',
+          component: () => import('@/views/RevenueView.vue'),
+        },
+        {
+          path: 'order-fulfillment',
+          name: 'order-fulfillment',
+          component: () => import('@/views/OrderFulfillmentView.vue'),
+        },
       ],
     },
   ],

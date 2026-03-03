@@ -7,6 +7,13 @@ import {
   Package,
   ListOrdered,
   Workflow,
+  ShoppingCart,
+  FileText,
+  ClipboardList,
+  DollarSign,
+  PackageCheck,
+  TrendingUp,
+  BarChart3,
   Settings,
 } from 'lucide-vue-next'
 
@@ -79,14 +86,20 @@ export const menus: MenuItem[] = [
       },
     ],
   },
-  // 추후 도메인 추가 예시:
-  // {
-  //   type: 'group',
-  //   key: 'production',
-  //   label: '생산관리',
-  //   icon: Factory,
-  //   children: [ ... ],
-  // },
+  {
+    type: 'group',
+    key: 'sales',
+    label: '영업 관리',
+    icon: ShoppingCart,
+    children: [
+      { type: 'leaf', key: 'quote', label: '견적 관리', path: '/quote', icon: FileText },
+      { type: 'leaf', key: 'order', label: '수주 관리', path: '/order', icon: ClipboardList },
+      { type: 'leaf', key: 'price', label: '단가 관리', path: '/price', icon: DollarSign },
+      { type: 'leaf', key: 'shipment', label: '출하 관리', path: '/shipment', icon: PackageCheck },
+      { type: 'leaf', key: 'revenue', label: '매출 관리', path: '/revenue', icon: TrendingUp },
+      { type: 'leaf', key: 'order-fulfillment', label: '수주 이행 현황', path: '/order-fulfillment', icon: BarChart3 },
+    ],
+  },
   {
     type: 'group',
     key: 'system',
