@@ -20,8 +20,8 @@
           v-else
           :value="modelValue[field.key]"
           @input="onInput(field.key, ($event.target as HTMLInputElement).value)"
-          type="text"
-          :placeholder="field.placeholder ?? `${field.label} 검색`"
+          :type="field.type === 'date' ? 'date' : 'text'"
+          :placeholder="field.placeholder ?? (field.type === 'date' ? 'yyyy-mm-dd' : `${field.label} 검색`)"
           class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           @keyup.enter="$emit('search')"
         />
@@ -53,7 +53,7 @@ export interface SearchFieldDef {
   key: string
   label: string
   placeholder?: string
-  type?: 'text' | 'select'
+  type?: 'text' | 'select' | 'date'
   options?: { value: string; label: string }[]
 }
 

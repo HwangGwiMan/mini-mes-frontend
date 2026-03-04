@@ -14,9 +14,33 @@
       </button>
     </div>
 
+    <!-- 기본 검색 -->
     <SearchBar
       :model-value="search"
-      :fields="searchFieldsComputed"
+      :fields="basicSearchFields"
+      @search="fetchData"
+      @reset="resetSearch"
+    />
+
+    <!-- 상세 검색 토글 -->
+    <button
+      type="button"
+      @click="showDetailSearch = !showDetailSearch"
+      class="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+    >
+      <ChevronDown
+        :size="16"
+        :class="{ 'rotate-180': showDetailSearch }"
+        class="transition-transform"
+      />
+      {{ showDetailSearch ? '상세 검색 접기' : '상세 검색 보기' }}
+    </button>
+
+    <!-- 상세 검색 (접었다 펼침) -->
+    <SearchBar
+      v-if="showDetailSearch"
+      :model-value="search"
+      :fields="detailSearchFields"
       @search="fetchData"
       @reset="resetSearch"
     />
@@ -100,7 +124,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, AlertTriangle, ChevronDown } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -120,6 +144,8 @@ const partnerOptions = ref<{ value: string; label: string }[]>([])
 const employeeOptions = ref<{ value: string; label: string }[]>([])
 const itemOptions = ref<{ value: string; label: string }[]>([])
 const statusOptions = ref<{ value: string; label: string }[]>([])
+
+const showDetailSearch = ref(false)
 
 const search = reactive({
   quoteNumber: '',
@@ -222,7 +248,7 @@ const columnsComputed = computed(() => [
   }),
 ])
 
-const searchFieldsComputed = computed<SearchFieldDef[]>(() => [
+const basicSearchFields = computed<SearchFieldDef[]>(() => [
   { key: 'quoteNumber', label: '견적번호', placeholder: '견적번호 검색' },
   {
     key: 'partnerId',
@@ -238,6 +264,9 @@ const searchFieldsComputed = computed<SearchFieldDef[]>(() => [
     placeholder: '전체',
     options: statusOptions.value,
   },
+])
+
+const detailSearchFields = computed<SearchFieldDef[]>(() => [
   { key: 'fromDate', label: '견적일자(부터)', type: 'date', placeholder: 'yyyy-mm-dd' },
   { key: 'toDate', label: '견적일자(까지)', type: 'date', placeholder: 'yyyy-mm-dd' },
 ])
