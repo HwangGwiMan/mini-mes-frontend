@@ -62,6 +62,14 @@
             <Trash2 :size="12" />
             삭제
           </button>
+          <button
+            v-if="row.statusCode === 'QUOTE_STATUS_03'"
+            @click="convertToOrder(row)"
+            class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors whitespace-nowrap"
+          >
+            <ArrowRightFromLine :size="12" />
+            수주 전환
+          </button>
         </div>
       </template>
     </DataTable>
@@ -124,13 +132,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Pencil, Trash2, AlertTriangle, ChevronDown } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, AlertTriangle, ChevronDown, ArrowRightFromLine } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import QuoteFormModal from '@/components/QuoteFormModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { quoteApi, type QuoteDto, type QuoteRequest } from '@/api/quote'
+import { orderApi } from '@/api/order'
 import { partnerApi } from '@/api/partner'
 import { employeeApi } from '@/api/employee'
 import { itemApi } from '@/api/item'
@@ -199,6 +208,22 @@ function resetSearch() {
   search.fromDate = ''
   search.toDate = ''
   fetchData()
+}
+
+const convertError = ref('')
+
+async function convertToOrder(row: QuoteDto) {
+  if (!confirm(`견적 ${row.quoteNumber}을(를) 수주로 전환하시겠습니까?`)) return
+  convertError.value = ''
+  try {
+    await orderApi.convertFromQuote(row.id)
+    await fetchData()
+  } catch (err: unknown) {
+    const e = err as {
+      response?: { data?: { message?: string } }
+    }
+    alert(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
+  }
 }
 
 async function handleQuoteConfirm(payload: QuoteRequest) {
