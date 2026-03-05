@@ -75,7 +75,14 @@
           </button>
 
           <!-- 그룹 자식 메뉴 -->
-          <Transition name="slide">
+          <Transition
+            @before-enter="onBeforeEnter"
+            @enter="onEnter"
+            @after-enter="onAfterEnter"
+            @before-leave="onBeforeLeave"
+            @leave="onLeave"
+            @after-leave="onAfterLeave"
+          >
             <div
               v-if="!collapsed && openGroups.has(item.key)"
               class="mt-1 ml-4 space-y-1 border-l border-gray-700 pl-3"
@@ -186,6 +193,56 @@ function toggleGroup(key: string) {
 function isGroupActive(item: MenuGroup): boolean {
   return item.children.some((child) => route.path.startsWith(child.path))
 }
+
+function onBeforeEnter(el: Element) {
+  const e = el as HTMLElement
+  e.style.maxHeight = '0'
+  e.style.overflow = 'hidden'
+  e.style.opacity = '0'
+}
+
+function onEnter(el: Element, done: () => void) {
+  const e = el as HTMLElement
+  const height = e.scrollHeight
+  e.style.transition = 'max-height 0.25s ease, opacity 0.2s ease'
+  requestAnimationFrame(() => {
+    e.style.maxHeight = height + 'px'
+    e.style.opacity = '1'
+  })
+  e.addEventListener('transitionend', done, { once: true })
+}
+
+function onAfterEnter(el: Element) {
+  const e = el as HTMLElement
+  e.style.maxHeight = ''
+  e.style.overflow = ''
+  e.style.opacity = ''
+  e.style.transition = ''
+}
+
+function onBeforeLeave(el: Element) {
+  const e = el as HTMLElement
+  e.style.maxHeight = e.scrollHeight + 'px'
+  e.style.overflow = 'hidden'
+}
+
+function onLeave(el: Element, done: () => void) {
+  const e = el as HTMLElement
+  e.style.transition = 'max-height 0.25s ease, opacity 0.2s ease'
+  requestAnimationFrame(() => {
+    e.style.maxHeight = '0'
+    e.style.opacity = '0'
+  })
+  e.addEventListener('transitionend', done, { once: true })
+}
+
+function onAfterLeave(el: Element) {
+  const e = el as HTMLElement
+  e.style.maxHeight = ''
+  e.style.overflow = ''
+  e.style.opacity = ''
+  e.style.transition = ''
+}
 </script>
 
 <style scoped>
@@ -196,21 +253,5 @@ function isGroupActive(item: MenuGroup): boolean {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.2s ease;
-  overflow: hidden;
-}
-.slide-enter-from,
-.slide-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-.slide-enter-to,
-.slide-leave-from {
-  max-height: 500px;
-  opacity: 1;
 }
 </style>
