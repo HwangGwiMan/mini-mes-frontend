@@ -10,7 +10,15 @@
 
         <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl my-8">
           <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 class="text-base font-semibold text-gray-900">{{ title }}</h3>
+            <div class="flex items-center gap-3">
+              <h3 class="text-base font-semibold text-gray-900">{{ title }}</h3>
+              <span
+                v-if="isSubmitted"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+              >
+                제출됨 — 수정 불가
+              </span>
+            </div>
             <button
               @click="$emit('update:modelValue', false)"
               class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -24,21 +32,18 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div v-if="isEdit" class="lg:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">견적번호</label>
-                <div
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-500"
-                >
+                <div class="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-500">
                   {{ header.quoteNumber }}
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                  견적일자 <span class="text-red-500">*</span>
-                </label>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">견적일자 <span class="text-red-500">*</span></label>
                 <input
                   v-model="header.quoteDate"
                   type="date"
                   required
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -46,58 +51,43 @@
                 <input
                   v-model="header.validUntil"
                   type="date"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                  거래처 <span class="text-red-500">*</span>
-                </label>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">거래처 <span class="text-red-500">*</span></label>
                 <select
                   v-model="header.partnerId"
                   required
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   <option value="">거래처 선택</option>
-                  <option
-                    v-for="p in partnerOptions"
-                    :key="p.value"
-                    :value="Number(p.value)"
-                  >
-                    {{ p.label }}
-                  </option>
+                  <option v-for="p in partnerOptions" :key="p.value" :value="Number(p.value)">{{ p.label }}</option>
                 </select>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">담당자</label>
                 <select
                   v-model="header.employeeId"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   <option value="">담당자 선택</option>
-                  <option
-                    v-for="e in employeeOptions"
-                    :key="e.value"
-                    :value="Number(e.value)"
-                  >
-                    {{ e.label }}
-                  </option>
+                  <option v-for="e in employeeOptions" :key="e.value" :value="Number(e.value)">{{ e.label }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">상태</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">결재자 <span class="text-red-500">*</span></label>
                 <select
-                  v-model="header.statusCode"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  v-model="header.approverId"
+                  required
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
-                  <option value="">상태 선택</option>
-                  <option
-                    v-for="s in statusOptions"
-                    :key="s.value"
-                    :value="s.value"
-                  >
-                    {{ s.label }}
-                  </option>
+                  <option value="">결재자 선택</option>
+                  <option v-for="e in employeeOptions" :key="e.value" :value="Number(e.value)">{{ e.label }}</option>
                 </select>
               </div>
               <div class="sm:col-span-2 lg:col-span-3">
@@ -107,7 +97,8 @@
                   type="text"
                   maxlength="200"
                   placeholder="비고 입력"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  :disabled="isSubmitted"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -117,12 +108,12 @@
               <div class="flex items-center justify-between mb-2">
                 <label class="block text-sm font-medium text-gray-700">견적 상세</label>
                 <button
+                  v-if="!isSubmitted"
                   type="button"
                   @click="addLine"
                   class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                 >
-                  <Plus :size="12" />
-                  행 추가
+                  <Plus :size="12" /> 행 추가
                 </button>
               </div>
               <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -135,29 +126,20 @@
                       <th class="px-3 py-2 text-right font-medium w-24">금액</th>
                       <th class="px-3 py-2 text-left font-medium w-32">납기요청일</th>
                       <th class="px-3 py-2 text-left font-medium">비고</th>
-                      <th class="px-3 py-2 w-12"></th>
+                      <th v-if="!isSubmitted" class="px-3 py-2 w-12"></th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-100">
-                    <tr
-                      v-for="(line, idx) in lines"
-                      :key="idx"
-                      class="hover:bg-gray-50"
-                    >
+                    <tr v-for="(line, idx) in lines" :key="idx" class="hover:bg-gray-50">
                       <td class="px-3 py-2">
                         <select
                           v-model="line.itemId"
                           required
-                          class="w-full min-w-[140px] px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                          :disabled="isSubmitted"
+                          class="w-full min-w-[140px] px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
                         >
                           <option :value="0">품목 선택</option>
-                          <option
-                            v-for="i in itemOptions"
-                            :key="i.value"
-                            :value="Number(i.value)"
-                          >
-                            {{ i.label }}
-                          </option>
+                          <option v-for="i in itemOptions" :key="i.value" :value="Number(i.value)">{{ i.label }}</option>
                         </select>
                       </td>
                       <td class="px-3 py-2">
@@ -167,7 +149,8 @@
                           min="0.0001"
                           step="0.0001"
                           required
-                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          :disabled="isSubmitted"
+                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                           @input="updateAmount(idx)"
                         />
                       </td>
@@ -178,28 +161,29 @@
                           min="0"
                           step="0.01"
                           required
-                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          :disabled="isSubmitted"
+                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                           @input="updateAmount(idx)"
                         />
                       </td>
-                      <td class="px-3 py-2 text-right text-gray-600 tabular-nums">
-                        {{ formatAmount(lineAmount(idx)) }}
-                      </td>
+                      <td class="px-3 py-2 text-right text-gray-600 tabular-nums">{{ formatAmount(lineAmount(idx)) }}</td>
                       <td class="px-3 py-2">
                         <input
                           v-model="line.deliveryRequestDate"
                           type="date"
-                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          :disabled="isSubmitted"
+                          class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                         />
                       </td>
                       <td class="px-3 py-2">
                         <input
                           v-model="line.remarks"
                           type="text"
-                          class="w-full min-w-[80px] px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          :disabled="isSubmitted"
+                          class="w-full min-w-[80px] px-2 py-1.5 rounded border border-gray-300 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
                         />
                       </td>
-                      <td class="px-3 py-2">
+                      <td v-if="!isSubmitted" class="px-3 py-2">
                         <button
                           type="button"
                           @click="removeLine(idx)"
@@ -213,9 +197,7 @@
                   </tbody>
                 </table>
               </div>
-              <p v-if="lines.length === 0" class="text-sm text-gray-500 py-3 text-center">
-                견적 상세를 추가하세요.
-              </p>
+              <p v-if="lines.length === 0" class="text-sm text-gray-500 py-3 text-center">견적 상세를 추가하세요.</p>
             </div>
 
             <div
@@ -232,16 +214,16 @@
                 @click="$emit('update:modelValue', false)"
                 class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                취소
+                {{ isSubmitted ? '닫기' : '취소' }}
               </button>
               <button
+                v-if="!isSubmitted"
                 type="submit"
                 :disabled="submitting || lines.length === 0"
                 class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <span v-if="submitting" class="flex items-center gap-1.5">
-                  <Loader2 :size="14" class="animate-spin" />
-                  저장 중...
+                  <Loader2 :size="14" class="animate-spin" /> 저장 중...
                 </span>
                 <span v-else>저장</span>
               </button>
@@ -254,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { X, Plus, Trash2, AlertCircle, Loader2 } from 'lucide-vue-next'
 import type { QuoteRequest, QuoteLineRequest, QuoteDto } from '@/api/quote'
 
@@ -273,7 +255,6 @@ const props = defineProps<{
   partnerOptions: { value: string; label: string }[]
   employeeOptions: { value: string; label: string }[]
   itemOptions: { value: string; label: string }[]
-  statusOptions: { value: string; label: string }[]
   submitting?: boolean
   errorMsg?: string
 }>()
@@ -284,12 +265,15 @@ const emit = defineEmits<{
 }>()
 
 const isEdit = ref(false)
+const isSubmitted = computed(() => header.value.statusCode === 'QUOTE_STATUS_02')
+
 const header = ref({
   quoteNumber: '',
   quoteDate: '',
   validUntil: '',
   partnerId: 0,
   employeeId: 0 as number | 0,
+  approverId: 0 as number | 0,
   statusCode: '',
   remarks: '',
 })
@@ -307,6 +291,7 @@ watch(
           validUntil: props.initialData.validUntil ?? '',
           partnerId: props.initialData.partnerId,
           employeeId: props.initialData.employeeId ?? 0,
+          approverId: props.initialData.approverId ?? 0,
           statusCode: props.initialData.statusCode ?? '',
           remarks: props.initialData.remarks ?? '',
         }
@@ -325,6 +310,7 @@ watch(
           validUntil: '',
           partnerId: 0,
           employeeId: 0,
+          approverId: 0,
           statusCode: '',
           remarks: '',
         }
@@ -335,13 +321,7 @@ watch(
 )
 
 function addLine() {
-  lines.value.push({
-    itemId: 0,
-    quantity: 0,
-    unitPrice: 0,
-    deliveryRequestDate: '',
-    remarks: '',
-  })
+  lines.value.push({ itemId: 0, quantity: 0, unitPrice: 0, deliveryRequestDate: '', remarks: '' })
 }
 
 function removeLine(idx: number) {
@@ -363,6 +343,7 @@ function formatAmount(n: number): string {
 }
 
 function handleSubmit() {
+  if (isSubmitted.value) return
   const validLines = lines.value.filter((l) => l.itemId > 0 && (l.quantity || 0) > 0)
   if (validLines.length === 0) return
 
@@ -380,7 +361,7 @@ function handleSubmit() {
     validUntil: header.value.validUntil || null,
     partnerId: header.value.partnerId,
     employeeId: header.value.employeeId || null,
-    statusCode: header.value.statusCode || '',
+    approverId: header.value.approverId,
     remarks: header.value.remarks || '',
     lines: lineRequests,
   }

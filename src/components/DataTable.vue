@@ -72,13 +72,13 @@
         <thead>
           <tr class="border-b border-gray-200 bg-gray-50">
             <!-- 순번 컬럼 -->
-            <th class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <th class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
               #
             </th>
             <th
               v-for="header in table.getFlatHeaders()"
               :key="header.id"
-              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+              class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap"
               :class="header.column.getCanSort() ? 'cursor-pointer select-none hover:text-gray-700' : ''"
               @click="header.column.getToggleSortingHandler()?.($event)"
             >
@@ -93,7 +93,7 @@
             </th>
             <th
               v-if="$slots.actions"
-              class="w-28 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+              class="w-28 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap"
             >
               작업
             </th>

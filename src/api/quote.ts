@@ -25,6 +25,9 @@ export interface QuoteDto {
   employeeId: number | null
   employeeCode: string | null
   employeeName: string | null
+  approverId: number | null
+  approverCode: string | null
+  approverName: string | null
   statusCode: string
   remarks: string | null
   lines: QuoteLineDto[]
@@ -44,7 +47,7 @@ export interface QuoteRequest {
   validUntil?: string | null
   partnerId: number
   employeeId?: number | null
-  statusCode?: string
+  approverId: number
   remarks?: string
   lines: QuoteLineRequest[]
 }
@@ -55,6 +58,21 @@ export interface QuoteSearchParams {
   statusCode?: string
   fromDate?: string
   toDate?: string
+}
+
+export interface ApprovalRequest {
+  comment?: string
+}
+
+export interface ApprovalResponse {
+  id: number
+  quoteId: number
+  approverEmployeeId: number
+  approverUsername: string
+  approverName: string
+  action: 'APPROVED' | 'REJECTED'
+  comment: string | null
+  createdAt: string
 }
 
 export const quoteApi = {
@@ -72,4 +90,16 @@ export const quoteApi = {
 
   delete: (id: number) =>
     api.delete<void>(`/api/quotes/${id}`),
+
+  submit: (id: number) =>
+    api.patch<void>(`/api/quotes/${id}/submit`),
+
+  approve: (id: number, data: ApprovalRequest) =>
+    api.post<void>(`/api/quotes/${id}/approve`, data),
+
+  reject: (id: number, data: ApprovalRequest) =>
+    api.post<void>(`/api/quotes/${id}/reject`, data),
+
+  getApprovals: (id: number) =>
+    api.get<ApprovalResponse[]>(`/api/quotes/${id}/approvals`),
 }

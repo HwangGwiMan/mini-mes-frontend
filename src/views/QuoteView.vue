@@ -36,7 +36,7 @@
       {{ showDetailSearch ? '상세 검색 접기' : '상세 검색 보기' }}
     </button>
 
-    <!-- 상세 검색 (접었다 펼침) -->
+    <!-- 상세 검색 -->
     <SearchBar
       v-if="showDetailSearch"
       :model-value="search"
@@ -62,6 +62,33 @@
             <Trash2 :size="12" />
             삭제
           </button>
+          <!-- 제출 버튼: 작성중(01) 또는 반려(04) 상태 -->
+          <button
+            v-if="row.statusCode === 'QUOTE_STATUS_01' || row.statusCode === 'QUOTE_STATUS_04'"
+            @click="handleSubmit(row)"
+            class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 rounded-md hover:bg-yellow-100 transition-colors whitespace-nowrap"
+          >
+            <Send :size="12" />
+            제출
+          </button>
+          <!-- 승인/반려 버튼: 제출(02) 상태 & 결재자 본인 -->
+          <template v-if="row.statusCode === 'QUOTE_STATUS_02' && row.approverId === currentUser?.employeeId">
+            <button
+              @click="openApproveModal(row)"
+              class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-md hover:bg-green-100 transition-colors whitespace-nowrap"
+            >
+              <CheckCircle :size="12" />
+              승인
+            </button>
+            <button
+              @click="openRejectModal(row)"
+              class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors whitespace-nowrap"
+            >
+              <XCircle :size="12" />
+              반려
+            </button>
+          </template>
+          <!-- 수주 전환 버튼: 승인(03) 상태 -->
           <button
             v-if="row.statusCode === 'QUOTE_STATUS_03'"
             @click="convertToOrder(row)"
@@ -69,6 +96,14 @@
           >
             <ArrowRightFromLine :size="12" />
             수주 전환
+          </button>
+          <!-- 결재 이력 버튼 -->
+          <button
+            @click="openHistoryModal(row)"
+            class="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+          >
+            <History :size="12" />
+            이력
           </button>
         </div>
       </template>
@@ -81,12 +116,26 @@
       :partner-options="partnerOptions"
       :employee-options="employeeOptions"
       :item-options="itemOptions"
-      :status-options="statusOptions"
       :submitting="submitting"
       :error-msg="modalError"
       @confirm="handleQuoteConfirm"
     />
 
+    <!-- 승인/반려 코멘트 모달 -->
+    <ApprovalCommentModal
+      v-model="commentModalOpen"
+      :action="commentModalAction"
+      :submitting="approvalSubmitting"
+      @confirm="handleApprovalConfirm"
+    />
+
+    <!-- 결재 이력 모달 -->
+    <QuoteApprovalHistoryModal
+      v-model="historyModalOpen"
+      :quote-id="historyQuoteId"
+    />
+
+    <!-- 삭제 확인 모달 -->
     <Teleport to="body">
       <Transition name="modal">
         <div
@@ -132,11 +181,16 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Pencil, Trash2, AlertTriangle, ChevronDown, ArrowRightFromLine } from 'lucide-vue-next'
+import {
+  Plus, Pencil, Trash2, AlertTriangle, ChevronDown, ArrowRightFromLine,
+  Send, CheckCircle, XCircle, History,
+} from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import QuoteFormModal from '@/components/QuoteFormModal.vue'
+import ApprovalCommentModal from '@/components/ApprovalCommentModal.vue'
+import QuoteApprovalHistoryModal from '@/components/QuoteApprovalHistoryModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { quoteApi, type QuoteDto, type QuoteRequest } from '@/api/quote'
 import { orderApi } from '@/api/order'
@@ -144,10 +198,11 @@ import { partnerApi } from '@/api/partner'
 import { employeeApi } from '@/api/employee'
 import { itemApi } from '@/api/item'
 import { commonCodeApi } from '@/api/commonCode'
-import { useScreenInit } from '@/composables/useScreenInit'
+import { useScreenInit, type CurrentUser } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 
 const { initialize } = useScreenInit()
+const currentUser = ref<CurrentUser | null>(null)
 
 const partnerOptions = ref<{ value: string; label: string }[]>([])
 const employeeOptions = ref<{ value: string; label: string }[]>([])
@@ -210,18 +265,13 @@ function resetSearch() {
   fetchData()
 }
 
-const convertError = ref('')
-
 async function convertToOrder(row: QuoteDto) {
   if (!confirm(`견적 ${row.quoteNumber}을(를) 수주로 전환하시겠습니까?`)) return
-  convertError.value = ''
   try {
     await orderApi.convertFromQuote(row.id)
     await fetchData()
   } catch (err: unknown) {
-    const e = err as {
-      response?: { data?: { message?: string } }
-    }
+    const e = err as { response?: { data?: { message?: string } } }
     alert(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
   }
 }
@@ -250,6 +300,64 @@ async function handleQuoteConfirm(payload: QuoteRequest) {
   }
 }
 
+// 제출
+async function handleSubmit(row: QuoteDto) {
+  if (!confirm(`견적 ${row.quoteNumber}을(를) 제출하시겠습니까?`)) return
+  try {
+    await quoteApi.submit(row.id)
+    await fetchData()
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    alert(e.response?.data?.message ?? '제출 중 오류가 발생했습니다.')
+  }
+}
+
+// 승인/반려 모달
+const commentModalOpen = ref(false)
+const commentModalAction = ref<'approve' | 'reject'>('approve')
+const approvalSubmitting = ref(false)
+const approvalTargetId = ref<number | null>(null)
+
+function openApproveModal(row: QuoteDto) {
+  approvalTargetId.value = row.id
+  commentModalAction.value = 'approve'
+  commentModalOpen.value = true
+}
+
+function openRejectModal(row: QuoteDto) {
+  approvalTargetId.value = row.id
+  commentModalAction.value = 'reject'
+  commentModalOpen.value = true
+}
+
+async function handleApprovalConfirm(comment: string) {
+  if (approvalTargetId.value == null) return
+  approvalSubmitting.value = true
+  try {
+    if (commentModalAction.value === 'approve') {
+      await quoteApi.approve(approvalTargetId.value, { comment })
+    } else {
+      await quoteApi.reject(approvalTargetId.value, { comment })
+    }
+    commentModalOpen.value = false
+    await fetchData()
+  } catch (err: unknown) {
+    const e = err as { response?: { data?: { message?: string } } }
+    alert(e.response?.data?.message ?? '처리 중 오류가 발생했습니다.')
+  } finally {
+    approvalSubmitting.value = false
+  }
+}
+
+// 결재 이력
+const historyModalOpen = ref(false)
+const historyQuoteId = ref<number | null>(null)
+
+function openHistoryModal(row: QuoteDto) {
+  historyQuoteId.value = row.id
+  historyModalOpen.value = true
+}
+
 const columnHelper = createColumnHelper<QuoteDto>()
 const columnsComputed = computed(() => [
   columnHelper.accessor('quoteNumber', { header: '견적번호', enableSorting: true }),
@@ -257,6 +365,11 @@ const columnsComputed = computed(() => [
   columnHelper.accessor('partnerName', { header: '거래처', enableSorting: false }),
   columnHelper.accessor('employeeName', {
     header: '담당자',
+    enableSorting: false,
+    cell: (info) => info.getValue() ?? '-',
+  }),
+  columnHelper.accessor('approverName', {
+    header: '결재자',
     enableSorting: false,
     cell: (info) => info.getValue() ?? '-',
   }),
@@ -297,7 +410,7 @@ const detailSearchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  await initialize()
+  currentUser.value = await initialize()
   const [partnersRes, employeesRes, itemsRes, statusRes] = await Promise.all([
     partnerApi.getAll(),
     employeeApi.getAll(),
