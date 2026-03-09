@@ -120,9 +120,9 @@
                 <table class="w-full text-sm">
                   <thead class="bg-gray-50 text-gray-700">
                     <tr>
-                      <th class="px-3 py-2 text-left font-medium">품목</th>
-                      <th class="px-3 py-2 text-right font-medium w-24">수량</th>
-                      <th class="px-3 py-2 text-right font-medium w-24">단가</th>
+                      <th class="px-3 py-2 text-left font-medium">품목<span class="text-red-500 ml-0.5">*</span></th>
+                      <th class="px-3 py-2 text-right font-medium w-24">수량<span class="text-red-500 ml-0.5">*</span></th>
+                      <th class="px-3 py-2 text-right font-medium w-24">단가<span class="text-red-500 ml-0.5">*</span></th>
                       <th class="px-3 py-2 text-right font-medium w-24">금액</th>
                       <th class="px-3 py-2 text-left font-medium w-32">납기요청일</th>
                       <th class="px-3 py-2 text-left font-medium">비고</th>
@@ -146,8 +146,8 @@
                         <input
                           v-model.number="line.quantity"
                           type="number"
-                          min="0.0001"
-                          step="0.0001"
+                          min="1"
+                          step="1"
                           required
                           :disabled="isSubmitted"
                           class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
@@ -159,7 +159,7 @@
                           v-model.number="line.unitPrice"
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="1"
                           required
                           :disabled="isSubmitted"
                           class="w-full px-2 py-1.5 rounded border border-gray-300 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
