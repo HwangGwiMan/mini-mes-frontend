@@ -67,3 +67,17 @@ Most list pages use the same three-layer pattern:
 | `useCrudPage` | Full CRUD state + handler wiring |
 | `useColumnSettings` | localStorage persistence for DataTable column visibility/order, keyed by username + tableId |
 | `useScreenInit` | Fetches current user via GraphQL `{ me { username role } }` |
+
+## Comment Style
+
+- Write in **Korean**.
+- Explain **why**, not what — don't repeat what the code already says.
+- Prioritize business rules: API constraints, status transitions, non-obvious UX decisions, etc.
+- Keep comments in sync with code when making changes.
+
+| Location | Format | When to write |
+|---|---|---|
+| `.vue` file top | `/** */` block | Always — describe screen structure and any notable behavior |
+| Composable function | JSDoc | Always |
+| Internal helper function | JSDoc or omit | Omit if the name is self-explanatory |
+| Inline | `//` | Non-intuitive behavior, API constraints |
