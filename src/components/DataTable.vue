@@ -134,7 +134,9 @@
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </td>
               <td v-if="$slots.actions" class="px-4 py-3">
-                <slot name="actions" :row="row.original" />
+                <div class="flex items-center gap-1.5">
+                  <slot name="actions" :row="row.original" />
+                </div>
               </td>
             </tr>
           </template>
