@@ -76,6 +76,7 @@ export interface RevenueUpdateRequest {
 export interface RevenueSearchParams {
   statusCode?: string
   partnerId?: number
+  salesOrderId?: number // 수주이행현황 디테일 패널에서 특정 수주의 매출 조회 시 사용
   fromDate?: string
   toDate?: string
 }
