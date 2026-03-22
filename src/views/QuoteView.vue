@@ -200,8 +200,10 @@ import { itemApi } from '@/api/item'
 import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit, type CurrentUser } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
+import { useToast } from '@/composables/useToast'
 
 const { initialize } = useScreenInit()
+const { showSuccess, showError } = useToast()
 const currentUser = ref<CurrentUser | null>(null)
 
 const partnerOptions = ref<{ value: string; label: string }[]>([])
@@ -269,10 +271,11 @@ async function convertToOrder(row: QuoteDto) {
   if (!confirm(`견적 ${row.quoteNumber}을(를) 수주로 전환하시겠습니까?`)) return
   try {
     await orderApi.convertFromQuote(row.id)
+    showSuccess('수주로 전환되었습니다.')
     await fetchData()
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
   }
 }
 
@@ -305,10 +308,11 @@ async function handleSubmit(row: QuoteDto) {
   if (!confirm(`견적 ${row.quoteNumber}을(를) 제출하시겠습니까?`)) return
   try {
     await quoteApi.submit(row.id)
+    showSuccess('제출되었습니다.')
     await fetchData()
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '제출 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '제출 중 오류가 발생했습니다.')
   }
 }
 
@@ -336,14 +340,16 @@ async function handleApprovalConfirm(comment: string) {
   try {
     if (commentModalAction.value === 'approve') {
       await quoteApi.approve(approvalTargetId.value, { comment })
+      showSuccess('승인 처리되었습니다.')
     } else {
       await quoteApi.reject(approvalTargetId.value, { comment })
+      showSuccess('반려 처리되었습니다.')
     }
     commentModalOpen.value = false
     await fetchData()
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '처리 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '처리 중 오류가 발생했습니다.')
   } finally {
     approvalSubmitting.value = false
   }

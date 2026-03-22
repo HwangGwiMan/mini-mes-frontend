@@ -108,8 +108,10 @@ import { useScreenInit } from '@/composables/useScreenInit'
 import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import RevenueFormModal from '@/components/RevenueFormModal.vue'
+import { useToast } from '@/composables/useToast'
 
 const { initialize } = useScreenInit()
+const { showSuccess, showError } = useToast()
 
 // 검색 상태
 const search = reactive<Record<string, string>>({
@@ -214,11 +216,12 @@ async function handleDelete() {
   if (!deleteTarget.value) return
   try {
     await revenueApi.delete(deleteTarget.value.id)
+    showSuccess(`'${deleteTarget.value.revenueNumber}' 이(가) 삭제되었습니다.`)
     deleteTarget.value = null
     fetchData()
   } catch (err) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
   }
 }
 
@@ -226,10 +229,11 @@ async function handleClose(row: RevenueDto) {
   if (!confirm(`${row.revenueNumber}을(를) 마감 처리하시겠습니까?`)) return
   try {
     await revenueApi.close(row.id)
+    showSuccess('마감 처리되었습니다.')
     fetchData()
   } catch (err) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '마감 처리 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '마감 처리 중 오류가 발생했습니다.')
   }
 }
 
@@ -237,10 +241,11 @@ async function handleCancel(row: RevenueDto) {
   if (!confirm(`${row.revenueNumber} 마감을 취소하시겠습니까?`)) return
   try {
     await revenueApi.cancel(row.id)
+    showSuccess('마감 취소되었습니다.')
     fetchData()
   } catch (err) {
     const e = err as { response?: { data?: { message?: string } } }
-    alert(e.response?.data?.message ?? '취소 처리 중 오류가 발생했습니다.')
+    showError(e.response?.data?.message ?? '취소 처리 중 오류가 발생했습니다.')
   }
 }
 
@@ -250,8 +255,10 @@ async function handleRevenueConfirm(payload: RevenueCreateRequest | RevenueUpdat
   try {
     if (editTarget.value) {
       await revenueApi.update(editTarget.value.id, payload as RevenueUpdateRequest)
+      showSuccess('매출이 수정되었습니다.')
     } else {
       await revenueApi.create(payload as RevenueCreateRequest)
+      showSuccess('매출이 등록되었습니다.')
     }
     modalOpen.value = false
     fetchData()

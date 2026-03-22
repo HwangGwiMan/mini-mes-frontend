@@ -108,8 +108,10 @@ import { shipmentApi, type ShipmentDto, type ShipmentUpdateRequest, type Shipmen
 import { commonCodeApi } from '@/api/commonCode'
 import { employeeApi } from '@/api/employee'
 import { useScreenInit } from '@/composables/useScreenInit'
+import { useToast } from '@/composables/useToast'
 
 const { initialize } = useScreenInit()
+const { showSuccess, showError } = useToast()
 const tabs = [{ key: 'plan', label: '출하 계획' }, { key: 'result', label: '출하 결과' }]
 const activeTab = ref<'plan' | 'result'>('plan')
 const rows = ref<ShipmentDto[]>([])
@@ -177,12 +179,14 @@ function confirmDelete(row: ShipmentDto) { deleteTarget.value = row }
 async function handleDelete() {
   if (!deleteTarget.value) return
   submitting.value = true
+  const targetNumber = deleteTarget.value.shipmentNumber
   try {
     await shipmentApi.delete(deleteTarget.value.id)
     deleteTarget.value = null
+    showSuccess(`'${targetNumber}' 이(가) 삭제되었습니다.`)
     await fetchData()
   } catch (err: any) {
-    alert(err.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
+    showError(err.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
   } finally {
     submitting.value = false
   }
@@ -194,6 +198,7 @@ async function handleEditConfirm(payload: ShipmentUpdateRequest) {
   try {
     await shipmentApi.update(editTarget.value.id, payload)
     editModalOpen.value = false
+    showSuccess('출하 계획이 수정되었습니다.')
     await fetchData()
   } catch (err: any) {
     modalError.value = err.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
@@ -208,6 +213,7 @@ async function handleCompleteConfirm(payload: ShipmentCompleteRequest) {
   try {
     await shipmentApi.complete(completeTarget.value.id, payload)
     completeModalOpen.value = false
+    showSuccess('출하 완료 처리되었습니다.')
     await fetchData()
   } catch (err: any) {
     completeError.value = err.response?.data?.message ?? '출하 완료 처리 중 오류가 발생했습니다.'

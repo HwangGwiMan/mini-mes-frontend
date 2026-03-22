@@ -8,6 +8,9 @@
       <!-- 헤더 -->
       <AppHeader />
 
+      <!-- 토스트 알림 -->
+      <AppToast />
+
       <!-- 컨텐츠 -->
       <main class="flex-1 overflow-y-auto p-6">
         <RouterView v-slot="{ Component, route }">
@@ -25,6 +28,7 @@ import { ref } from 'vue'
 import { RouterView } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import AppToast from '@/components/AppToast.vue'
 
 const sidebarCollapsed = ref(false)
 </script>
