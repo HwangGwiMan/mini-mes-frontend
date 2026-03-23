@@ -282,9 +282,9 @@ async function handleSaveGroup(formData: Record<string, string>) {
   groupModalError.value = ''
   try {
     const payload: CodeGroupRequest = {
-      groupCode: formData.groupCode,
-      groupName: formData.groupName,
-      sortOrder: parseInt(formData.sortOrder) || 0,
+      groupCode: formData.groupCode ?? '',
+      groupName: formData.groupName ?? '',
+      sortOrder: parseInt(formData.sortOrder ?? '0') || 0,
     }
     if (groupEditTarget.value) {
       await codeGroupApi.update(groupEditTarget.value.id, payload)
@@ -350,8 +350,8 @@ async function handleSaveCode(formData: Record<string, string>) {
   try {
     const payload: CommonCodeRequest = {
       codeGroup: selectedGroup.value.groupCode,
-      name: formData.name,
-      sortOrder: parseInt(formData.sortOrder) || 0,
+      name: formData.name ?? '',
+      sortOrder: parseInt(formData.sortOrder ?? '0') || 0,
     }
     if (codeEditTarget.value) {
       await commonCodeApi.update(codeEditTarget.value.id, payload)

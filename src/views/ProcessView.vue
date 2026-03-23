@@ -157,12 +157,12 @@ function resetSearch() {
 
 function buildPayload(data: Record<string, string>) {
   return {
-    code:            data.code,
-    name:            data.name,
+    code:            data.code ?? '',
+    name:            data.name ?? '',
     processTypeCode: data.processTypeCode || '',
     standardTime:    data.standardTime ? parseInt(data.standardTime) : null,
     description:     data.description   || '',
-    sortOrder:       parseInt(data.sortOrder) || 0,
+    sortOrder:       parseInt(data.sortOrder ?? '0') || 0,
   }
 }
 

@@ -134,8 +134,8 @@ function resetSearch() {
 
 function buildPayload(data: Record<string, string>) {
   return {
-    code: data.code,
-    name: data.name,
+    code: data.code ?? '',
+    name: data.name ?? '',
     deptCode: data.deptCode || '',
     positionCode: data.positionCode || '',
     hireDate: data.hireDate ? data.hireDate : null,

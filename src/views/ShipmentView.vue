@@ -112,7 +112,7 @@ import { useToast } from '@/composables/useToast'
 
 const { initialize } = useScreenInit()
 const { showSuccess, showError } = useToast()
-const tabs = [{ key: 'plan', label: '출하 계획' }, { key: 'result', label: '출하 결과' }]
+const tabs: { key: 'plan' | 'result'; label: string }[] = [{ key: 'plan', label: '출하 계획' }, { key: 'result', label: '출하 결과' }]
 const activeTab = ref<'plan' | 'result'>('plan')
 const rows = ref<ShipmentDto[]>([])
 const loading = ref(false)

@@ -151,7 +151,7 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends Record<string, unknown>">
+<script setup lang="ts" generic="T extends object">
 import {
   useVueTable,
   getCoreRowModel,
@@ -169,7 +169,7 @@ import { useColumnSettings } from '@/composables/useColumnSettings'
 
 const props = defineProps<{
   data: T[]
-  columns: ColumnDef<T>[]
+  columns: ColumnDef<T, any>[]
   loading?: boolean
   tableId?: string
 }>()

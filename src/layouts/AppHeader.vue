@@ -72,7 +72,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ChevronDown, ChevronRight, Bell, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
-import { menus, type MenuGroup, type MenuLeaf } from '@/config/menus'
+import { menus, type MenuLeaf } from '@/config/menus'
 
 const route = useRoute()
 const router = useRouter()

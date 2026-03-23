@@ -9,7 +9,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { X, Plus, Trash2 } from 'lucide-vue-next'
 import { partnerApi, type PartnerDto } from '@/api/partner'
 import { employeeApi, type EmployeeDto } from '@/api/employee'
-import type { RevenueDto, AvailableOrderLineDto } from '@/api/revenue'
+import type { RevenueDto, AvailableOrderLineDto, RevenueCreateRequest, RevenueUpdateRequest } from '@/api/revenue'
 import RevenueItemSelectModal from './RevenueItemSelectModal.vue'
 
 interface EditLine {
@@ -34,7 +34,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  confirm: [data: unknown]
+  confirm: [data: RevenueCreateRequest | RevenueUpdateRequest]
 }>()
 
 const isEdit = computed(() => props.editTarget !== null)

@@ -132,8 +132,8 @@ function resetSearch() {
 
 function buildPayload(data: Record<string, string>) {
   return {
-    code: data.code,
-    name: data.name,
+    code: data.code ?? '',
+    name: data.name ?? '',
     itemTypeCode: data.itemTypeCode || '',
     unit: data.unit || '',
     spec: data.spec || '',
