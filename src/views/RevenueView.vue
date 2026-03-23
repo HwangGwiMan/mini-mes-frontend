@@ -114,6 +114,7 @@ import SearchBar from '@/components/SearchBar.vue'
 import RevenueFormModal from '@/components/RevenueFormModal.vue'
 import { useToast } from '@/composables/useToast'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
 const { initialize } = useScreenInit()
 const { showSuccess, showError } = useToast()
@@ -225,8 +226,7 @@ async function handleDelete() {
     deleteTarget.value = null
     fetchData()
   } catch (err) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '삭제 중 오류가 발생했습니다.'))
   }
 }
 
@@ -247,8 +247,7 @@ async function doHandleClose() {
     showSuccess('마감 처리되었습니다.')
     fetchData()
   } catch (err) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '마감 처리 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '마감 처리 중 오류가 발생했습니다.'))
   } finally {
     closeSubmitting.value = false
   }
@@ -271,8 +270,7 @@ async function doHandleCancel() {
     showSuccess('마감 취소되었습니다.')
     fetchData()
   } catch (err) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '취소 처리 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '취소 처리 중 오류가 발생했습니다.'))
   } finally {
     cancelSubmitting.value = false
   }
@@ -292,13 +290,7 @@ async function handleRevenueConfirm(payload: RevenueCreateRequest | RevenueUpdat
     modalOpen.value = false
     fetchData()
   } catch (err) {
-    const e = err as {
-      response?: { data?: { message?: string; errors?: { field: string; message: string }[] } }
-    }
-    modalError.value =
-      e.response?.data?.errors?.[0]?.message ??
-      e.response?.data?.message ??
-      '저장 중 오류가 발생했습니다.'
+    modalError.value = extractSaveErrorMessage(err)
   } finally {
     submitting.value = false
   }

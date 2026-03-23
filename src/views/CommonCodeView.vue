@@ -223,6 +223,7 @@ import type { FieldDef } from '@/components/CrudModal.vue'
 import { codeGroupApi, type CodeGroupDto, type CodeGroupRequest } from '@/api/codeGroup'
 import { commonCodeApi, type CommonCodeDto, type CommonCodeRequest } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
+import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
 const { initialize } = useScreenInit()
 
@@ -293,9 +294,7 @@ async function handleSaveGroup(formData: Record<string, string>) {
     groupModalOpen.value = false
     await fetchGroups()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string; errors?: { message: string }[] } } }
-    const firstFieldError = e.response?.data?.errors?.[0]?.message
-    groupModalError.value = firstFieldError ?? e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
+    groupModalError.value = extractSaveErrorMessage(err)
   } finally {
     groupSubmitting.value = false
   }
@@ -314,8 +313,7 @@ async function handleDeleteGroup() {
     groupDeleteTarget.value = null
     await fetchGroups()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    groupDeleteError.value = e.response?.data?.message ?? '삭제 중 오류가 발생했습니다.'
+    groupDeleteError.value = extractErrorMessage(err, '삭제 중 오류가 발생했습니다.')
   } finally {
     groupSubmitting.value = false
   }
@@ -363,9 +361,7 @@ async function handleSaveCode(formData: Record<string, string>) {
     codeModalOpen.value = false
     await fetchCodes()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string; errors?: { message: string }[] } } }
-    const firstFieldError = e.response?.data?.errors?.[0]?.message
-    codeModalError.value = firstFieldError ?? e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
+    codeModalError.value = extractSaveErrorMessage(err)
   } finally {
     codeSubmitting.value = false
   }

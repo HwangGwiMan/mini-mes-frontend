@@ -194,6 +194,7 @@ import { useScreenInit, type CurrentUser } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import { useToast } from '@/composables/useToast'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
 const { initialize } = useScreenInit()
 const { showSuccess, showError } = useToast()
@@ -277,8 +278,7 @@ async function doConvertToOrder() {
     showSuccess('수주로 전환되었습니다.')
     await fetchData()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '수주 전환 중 오류가 발생했습니다.'))
   } finally {
     convertSubmitting.value = false
   }
@@ -296,13 +296,7 @@ async function handleQuoteConfirm(payload: QuoteRequest) {
     modalOpen.value = false
     await fetchData()
   } catch (err: unknown) {
-    const e = err as {
-      response?: { data?: { message?: string; errors?: { field: string; message: string }[] } }
-    }
-    modalError.value =
-      e.response?.data?.errors?.[0]?.message ??
-      e.response?.data?.message ??
-      '저장 중 오류가 발생했습니다.'
+    modalError.value = extractSaveErrorMessage(err)
   } finally {
     submitting.value = false
   }
@@ -325,8 +319,7 @@ async function doHandleSubmit() {
     showSuccess('제출되었습니다.')
     await fetchData()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '제출 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '제출 중 오류가 발생했습니다.'))
   } finally {
     submitConfirmLoading.value = false
   }
@@ -364,8 +357,7 @@ async function handleApprovalConfirm(comment: string) {
     commentModalOpen.value = false
     await fetchData()
   } catch (err: unknown) {
-    const e = err as { response?: { data?: { message?: string } } }
-    showError(e.response?.data?.message ?? '처리 중 오류가 발생했습니다.')
+    showError(extractErrorMessage(err, '처리 중 오류가 발생했습니다.'))
   } finally {
     approvalSubmitting.value = false
   }

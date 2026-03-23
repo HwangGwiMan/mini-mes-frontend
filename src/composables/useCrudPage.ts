@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useToast } from '@/composables/useToast'
+import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
 interface UseCrudPageOptions<TDto extends { id: number; name: string }, TReq> {
   fetchFn: () => Promise<{ data: TDto[] }>
@@ -61,13 +62,10 @@ export function useCrudPage<TDto extends { id: number; name: string }, TReq>(
       modalOpen.value = false
       await fetchData()
     } catch (err: unknown) {
-      const e = err as {
-        response?: { data?: { message?: string; errors?: { field: string; message: string }[] } }
-      }
-      const firstFieldError = e.response?.data?.errors?.[0]?.message
-      // 필드 오류는 모달 내 인라인 표시, 일반 오류는 토스트로 표시
-      if (firstFieldError || e.response?.data?.message) {
-        modalError.value = firstFieldError ?? e.response?.data?.message ?? '저장 중 오류가 발생했습니다.'
+      const e = err as { response?: { data?: { message?: string; errors?: unknown[] } } }
+      // 필드 오류는 모달 내 인라인 표시, 서버 응답 없는 경우(네트워크 등)는 토스트로 표시
+      if (e.response?.data?.errors?.length || e.response?.data?.message) {
+        modalError.value = extractSaveErrorMessage(err)
       } else {
         showError('저장 중 오류가 발생했습니다.')
       }
@@ -90,8 +88,7 @@ export function useCrudPage<TDto extends { id: number; name: string }, TReq>(
       showSuccess(`'${targetName}' 이(가) 삭제되었습니다.`)
       await fetchData()
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } }
-      showError(e.response?.data?.message ?? '삭제 중 오류가 발생했습니다.')
+      showError(extractErrorMessage(err, '삭제 중 오류가 발생했습니다.'))
     } finally {
       submitting.value = false
     }
