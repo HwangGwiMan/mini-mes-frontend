@@ -66,34 +66,38 @@
     />
 
     <!-- 삭제 확인 다이얼로그 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="deleteTarget"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4"
-          @mousedown.self="deleteTarget = null"
-        >
-          <div class="absolute inset-0 bg-black/40" />
-          <div class="relative bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <h3 class="text-base font-semibold text-gray-900 mb-2">매출 삭제</h3>
-            <p class="text-sm text-gray-600 mb-6">
-              <strong>{{ deleteTarget.revenueNumber }}</strong>을(를) 삭제하시겠습니까?<br/>
-              이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div class="flex justify-end gap-2">
-              <button
-                @click="deleteTarget = null"
-                class="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-              >취소</button>
-              <button
-                @click="handleDelete"
-                class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
-              >삭제</button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ConfirmDialog
+      :open="!!deleteTarget"
+      title="매출 삭제"
+      :message="`'${deleteTarget?.revenueNumber}'을(를) 삭제하시겠습니까?`"
+      :loading="submitting"
+      @confirm="handleDelete"
+      @cancel="deleteTarget = null"
+    />
+
+    <!-- 마감 확인 다이얼로그 -->
+    <ConfirmDialog
+      :open="!!closeTarget"
+      title="마감 처리"
+      :message="`'${closeTarget?.revenueNumber}'을(를) 마감 처리하시겠습니까?`"
+      confirm-label="마감"
+      variant="warning"
+      :loading="closeSubmitting"
+      @confirm="doHandleClose"
+      @cancel="closeTarget = null"
+    />
+
+    <!-- 마감 취소 확인 다이얼로그 -->
+    <ConfirmDialog
+      :open="!!cancelTarget"
+      title="마감 취소"
+      :message="`'${cancelTarget?.revenueNumber}' 마감을 취소하시겠습니까?`"
+      confirm-label="취소 처리"
+      variant="warning"
+      :loading="cancelSubmitting"
+      @confirm="doHandleCancel"
+      @cancel="cancelTarget = null"
+    />
   </div>
 </template>
 
@@ -109,6 +113,7 @@ import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import RevenueFormModal from '@/components/RevenueFormModal.vue'
 import { useToast } from '@/composables/useToast'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { initialize } = useScreenInit()
 const { showSuccess, showError } = useToast()
@@ -225,27 +230,51 @@ async function handleDelete() {
   }
 }
 
-async function handleClose(row: RevenueDto) {
-  if (!confirm(`${row.revenueNumber}을(를) 마감 처리하시겠습니까?`)) return
+// 마감 처리 확인 상태
+const closeTarget = ref<RevenueDto | null>(null)
+const closeSubmitting = ref(false)
+
+function handleClose(row: RevenueDto) {
+  closeTarget.value = row
+}
+
+async function doHandleClose() {
+  if (!closeTarget.value) return
+  closeSubmitting.value = true
   try {
-    await revenueApi.close(row.id)
+    await revenueApi.close(closeTarget.value.id)
+    closeTarget.value = null
     showSuccess('마감 처리되었습니다.')
     fetchData()
   } catch (err) {
     const e = err as { response?: { data?: { message?: string } } }
     showError(e.response?.data?.message ?? '마감 처리 중 오류가 발생했습니다.')
+  } finally {
+    closeSubmitting.value = false
   }
 }
 
-async function handleCancel(row: RevenueDto) {
-  if (!confirm(`${row.revenueNumber} 마감을 취소하시겠습니까?`)) return
+// 마감 취소 확인 상태
+const cancelTarget = ref<RevenueDto | null>(null)
+const cancelSubmitting = ref(false)
+
+function handleCancel(row: RevenueDto) {
+  cancelTarget.value = row
+}
+
+async function doHandleCancel() {
+  if (!cancelTarget.value) return
+  cancelSubmitting.value = true
   try {
-    await revenueApi.cancel(row.id)
+    await revenueApi.cancel(cancelTarget.value.id)
+    cancelTarget.value = null
     showSuccess('마감 취소되었습니다.')
     fetchData()
   } catch (err) {
     const e = err as { response?: { data?: { message?: string } } }
     showError(e.response?.data?.message ?? '취소 처리 중 오류가 발생했습니다.')
+  } finally {
+    cancelSubmitting.value = false
   }
 }
 

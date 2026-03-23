@@ -135,54 +135,46 @@
       :quote-id="historyQuoteId"
     />
 
-    <!-- 삭제 확인 모달 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="deleteTarget"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4"
-          @mousedown.self="deleteTarget = null"
-        >
-          <div class="absolute inset-0 bg-black/40" />
-          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100">
-                <AlertTriangle :size="20" class="text-red-600" />
-              </div>
-              <div>
-                <h3 class="text-base font-semibold text-gray-900">견적 삭제</h3>
-                <p class="text-sm text-gray-500 mt-0.5">이 작업은 되돌릴 수 없습니다.</p>
-              </div>
-            </div>
-            <p class="text-sm text-gray-700 mb-6">
-              <span class="font-medium">{{ deleteTarget?.quoteNumber }}</span> 견적을 삭제하시겠습니까?
-            </p>
-            <div class="flex justify-end gap-2">
-              <button
-                @click="deleteTarget = null"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                @click="handleDelete"
-                :disabled="submitting"
-                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- 삭제 확인 다이얼로그 -->
+    <ConfirmDialog
+      :open="!!deleteTarget"
+      title="견적 삭제"
+      :message="`'${deleteTarget?.quoteNumber}' 견적을 삭제하시겠습니까?`"
+      :loading="submitting"
+      @confirm="handleDelete"
+      @cancel="deleteTarget = null"
+    />
+
+    <!-- 수주 전환 확인 다이얼로그 -->
+    <ConfirmDialog
+      :open="!!convertTarget"
+      title="수주 전환"
+      :message="`견적 '${convertTarget?.quoteNumber}'을(를) 수주로 전환하시겠습니까?`"
+      confirm-label="전환"
+      variant="warning"
+      :loading="convertSubmitting"
+      @confirm="doConvertToOrder"
+      @cancel="convertTarget = null"
+    />
+
+    <!-- 제출 확인 다이얼로그 -->
+    <ConfirmDialog
+      :open="!!submitTarget"
+      title="견적 제출"
+      :message="`견적 '${submitTarget?.quoteNumber}'을(를) 제출하시겠습니까?`"
+      confirm-label="제출"
+      variant="warning"
+      :loading="submitConfirmLoading"
+      @confirm="doHandleSubmit"
+      @cancel="submitTarget = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import {
-  Plus, Pencil, Trash2, AlertTriangle, ChevronDown, ArrowRightFromLine,
+  Plus, Pencil, Trash2, ChevronDown, ArrowRightFromLine,
   Send, CheckCircle, XCircle, History,
 } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
@@ -201,6 +193,7 @@ import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit, type CurrentUser } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import { useToast } from '@/composables/useToast'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { initialize } = useScreenInit()
 const { showSuccess, showError } = useToast()
@@ -267,15 +260,27 @@ function resetSearch() {
   fetchData()
 }
 
-async function convertToOrder(row: QuoteDto) {
-  if (!confirm(`견적 ${row.quoteNumber}을(를) 수주로 전환하시겠습니까?`)) return
+// 수주 전환 확인 상태
+const convertTarget = ref<QuoteDto | null>(null)
+const convertSubmitting = ref(false)
+
+function convertToOrder(row: QuoteDto) {
+  convertTarget.value = row
+}
+
+async function doConvertToOrder() {
+  if (!convertTarget.value) return
+  convertSubmitting.value = true
   try {
-    await orderApi.convertFromQuote(row.id)
+    await orderApi.convertFromQuote(convertTarget.value.id)
+    convertTarget.value = null
     showSuccess('수주로 전환되었습니다.')
     await fetchData()
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
     showError(e.response?.data?.message ?? '수주 전환 중 오류가 발생했습니다.')
+  } finally {
+    convertSubmitting.value = false
   }
 }
 
@@ -303,16 +308,27 @@ async function handleQuoteConfirm(payload: QuoteRequest) {
   }
 }
 
-// 제출
-async function handleSubmit(row: QuoteDto) {
-  if (!confirm(`견적 ${row.quoteNumber}을(를) 제출하시겠습니까?`)) return
+// 제출 확인 상태
+const submitTarget = ref<QuoteDto | null>(null)
+const submitConfirmLoading = ref(false)
+
+function handleSubmit(row: QuoteDto) {
+  submitTarget.value = row
+}
+
+async function doHandleSubmit() {
+  if (!submitTarget.value) return
+  submitConfirmLoading.value = true
   try {
-    await quoteApi.submit(row.id)
+    await quoteApi.submit(submitTarget.value.id)
+    submitTarget.value = null
     showSuccess('제출되었습니다.')
     await fetchData()
   } catch (err: unknown) {
     const e = err as { response?: { data?: { message?: string } } }
     showError(e.response?.data?.message ?? '제출 중 오류가 발생했습니다.')
+  } finally {
+    submitConfirmLoading.value = false
   }
 }
 
@@ -443,13 +459,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>

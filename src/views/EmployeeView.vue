@@ -56,53 +56,20 @@
       @confirm="handleSave"
     />
 
-    <!-- 삭제 확인 모달 -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="deleteTarget"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4"
-          @mousedown.self="deleteTarget = null"
-        >
-          <div class="absolute inset-0 bg-black/40" />
-          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100">
-                <AlertTriangle :size="20" class="text-red-600" />
-              </div>
-              <div>
-                <h3 class="text-base font-semibold text-gray-900">사원 삭제</h3>
-                <p class="text-sm text-gray-500 mt-0.5">이 작업은 되돌릴 수 없습니다.</p>
-              </div>
-            </div>
-            <p class="text-sm text-gray-700 mb-6">
-              <span class="font-medium">{{ deleteTarget?.name }}</span> 사원을 삭제하시겠습니까?
-            </p>
-            <div class="flex justify-end gap-2">
-              <button
-                @click="deleteTarget = null"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                @click="handleDelete"
-                :disabled="submitting"
-                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <ConfirmDialog
+      :open="!!deleteTarget"
+      title="사원 삭제"
+      :message="`'${deleteTarget?.name}' 사원을 삭제하시겠습니까?`"
+      :loading="submitting"
+      @confirm="handleDelete"
+      @cancel="deleteTarget = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
 import { createColumnHelper } from '@tanstack/vue-table'
 import DataTable from '@/components/DataTable.vue'
 import CrudModal from '@/components/CrudModal.vue'
@@ -113,6 +80,7 @@ import { employeeApi, type EmployeeDto } from '@/api/employee'
 import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { initialize } = useScreenInit()
 
@@ -292,13 +260,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>
