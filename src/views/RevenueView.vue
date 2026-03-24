@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import type { ColumnDef } from '@tanstack/vue-table'
+import { createColumnHelper } from '@tanstack/vue-table'
 import { Plus, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-vue-next'
 import { revenueApi, type RevenueDto, type RevenueCreateRequest, type RevenueUpdateRequest } from '@/api/revenue'
 import { commonCodeApi } from '@/api/commonCode'
@@ -167,29 +167,28 @@ const searchFields = computed(() => [
   { key: 'toDate', label: '매출일(종료)', type: 'date' as const },
 ])
 
-const columns: ColumnDef<RevenueDto>[] = [
-  { accessorKey: 'revenueNumber', header: '매출번호' },
-  { accessorKey: 'partnerName', header: '거래처' },
-  { accessorKey: 'employeeName', header: '담당자' },
-  { accessorKey: 'revenueDate', header: '매출일자' },
-  {
-    accessorKey: 'totalAmount',
+const columnHelper = createColumnHelper<RevenueDto>()
+const columns = [
+  columnHelper.accessor('revenueNumber', { header: '매출번호' }),
+  columnHelper.accessor('partnerName',   { header: '거래처' }),
+  columnHelper.accessor('employeeName',  { header: '담당자' }),
+  columnHelper.accessor('revenueDate',   { header: '매출일자' }),
+  columnHelper.accessor('totalAmount', {
     header: '총금액',
     cell: ({ getValue }) => Number(getValue()).toLocaleString('ko-KR'),
-  },
-  {
-    accessorKey: 'statusCode',
+  }),
+  columnHelper.accessor('statusCode', {
     header: '상태',
-    cell: ({ row }) => {
+    cell: ({ getValue }) => {
       const map: Record<string, string> = {
         REVENUE_STATUS_01: '초안',
         REVENUE_STATUS_02: '마감',
         REVENUE_STATUS_03: '취소',
       }
-      return map[row.original.statusCode] ?? row.original.statusCode
+      return map[getValue()] ?? getValue()
     },
-  },
-  { accessorKey: 'remarks', header: '비고' },
+  }),
+  columnHelper.accessor('remarks', { header: '비고' }),
 ]
 
 function resetSearch() {

@@ -45,7 +45,7 @@
       @reset="resetSearch"
     />
 
-    <DataTable :data="quotes" :columns="columnsComputed" :loading="loading" table-id="quote">
+    <DataTable :data="quotes" :columns="columns" :loading="loading" table-id="quote">
       <template #actions="{ row }">
         <div class="flex items-center gap-1.5">
           <button
@@ -375,7 +375,7 @@ function openHistoryModal(row: QuoteDto) {
 }
 
 const columnHelper = createColumnHelper<QuoteDto>()
-const columnsComputed = computed(() => [
+const columns = computed(() => [
   columnHelper.accessor('quoteNumber', { header: '견적번호', enableSorting: true }),
   columnHelper.accessor('quoteDate', { header: '견적일자', enableSorting: true }),
   columnHelper.accessor('partnerName', { header: '거래처', enableSorting: false }),

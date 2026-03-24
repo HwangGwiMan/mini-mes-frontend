@@ -24,7 +24,7 @@
     />
 
     <!-- 그리드 -->
-    <DataTable :data="items" :columns="columnsComputed" :loading="loading" table-id="item">
+    <DataTable :data="items" :columns="columns" :loading="loading" table-id="item">
       <template #actions="{ row }">
         <div class="flex items-center gap-1.5">
           <button
@@ -145,7 +145,7 @@ function buildPayload(data: Record<string, string>) {
 
 // 컬럼 정의
 const columnHelper = createColumnHelper<ItemDto>()
-const columnsComputed = computed(() => [
+const columns = computed(() => [
   columnHelper.accessor('code', { header: '코드', enableSorting: true }),
   columnHelper.accessor('name', { header: '명칭', enableSorting: true }),
   columnHelper.accessor('itemTypeCode', {

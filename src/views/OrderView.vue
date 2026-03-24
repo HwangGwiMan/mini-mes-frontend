@@ -42,7 +42,7 @@
       @reset="resetSearch"
     />
 
-    <DataTable :data="orders" :columns="columnsComputed" :loading="loading" table-id="order">
+    <DataTable :data="orders" :columns="columns" :loading="loading" table-id="order">
       <template #actions="{ row }">
         <div class="flex items-center gap-1.5">
           <button
@@ -222,7 +222,7 @@ async function handleOrderConfirm(payload: SalesOrderRequest) {
 }
 
 const columnHelper = createColumnHelper<SalesOrderDto>()
-const columnsComputed = computed(() => [
+const columns = computed(() => [
   columnHelper.accessor('orderNumber', { header: '수주번호', enableSorting: true }),
   columnHelper.accessor('orderDate', { header: '수주일자', enableSorting: true }),
   columnHelper.accessor('partnerName', { header: '거래처', enableSorting: false }),
