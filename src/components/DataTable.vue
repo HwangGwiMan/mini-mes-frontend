@@ -124,7 +124,7 @@
               class="hover:bg-gray-50 transition-colors"
             >
               <td class="px-4 py-3 text-gray-400 text-xs">
-                {{ rowIndex + 1 }}
+                {{ pagination.pageIndex * pagination.pageSize + rowIndex + 1 }}
               </td>
               <td
                 v-for="cell in row.getVisibleCells()"
@@ -144,9 +144,48 @@
       </table>
     </div>
 
-    <!-- 하단 요약 -->
+    <!-- 하단 요약 + 페이지네이션 -->
     <div class="mt-3 flex items-center justify-between text-xs text-gray-400">
-      <span>전체 {{ table.getRowModel().rows.length }}건</span>
+      <span>
+        전체 {{ props.data.length }}건
+        <template v-if="props.data.length > 0">
+          ({{ pagination.pageIndex * pagination.pageSize + 1 }}–{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, props.data.length) }})
+        </template>
+      </span>
+
+      <div class="flex items-center gap-3">
+        <!-- 페이지 크기 선택 -->
+        <div class="flex items-center gap-1.5">
+          <span>페이지당</span>
+          <select
+            :value="pagination.pageSize"
+            @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
+            class="border border-gray-200 rounded px-1.5 py-0.5 text-xs text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+          >
+            <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+          </select>
+          <span>행</span>
+        </div>
+
+        <!-- 페이지 이동 -->
+        <div class="flex items-center gap-1">
+          <button
+            @click="table.previousPage()"
+            :disabled="!table.getCanPreviousPage()"
+            class="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft :size="14" />
+          </button>
+          <span class="px-1">{{ pagination.pageIndex + 1 }} / {{ table.getPageCount() || 1 }}</span>
+          <button
+            @click="table.nextPage()"
+            :disabled="!table.getCanNextPage()"
+            class="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight :size="14" />
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -156,15 +195,17 @@ import {
   useVueTable,
   getCoreRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   FlexRender,
   type ColumnDef,
   type SortingState,
   type VisibilityState,
   type ColumnOrderState,
   type Column,
+  type PaginationState,
 } from '@tanstack/vue-table'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { ChevronsUpDown, ChevronUp, ChevronDown, Settings2, GripVertical } from 'lucide-vue-next'
+import { ChevronsUpDown, ChevronUp, ChevronDown, Settings2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useColumnSettings } from '@/composables/useColumnSettings'
 
 const props = defineProps<{
@@ -172,6 +213,7 @@ const props = defineProps<{
   columns: ColumnDef<T, any>[]
   loading?: boolean
   tableId?: string
+  pageSize?: number
 }>()
 
 // ── 설정 패널 열림/닫힘 ───────────────────────────────────────────
@@ -192,6 +234,10 @@ const savedSettings = colSettings?.load() ?? null
 
 // ── TanStack Table 상태 ──────────────────────────────────────────
 const sorting = ref<SortingState>([])
+const pagination = ref<PaginationState>({ pageIndex: 0, pageSize: props.pageSize ?? 20 })
+
+// 검색 결과가 바뀌면 첫 페이지로 리셋
+watch(() => props.data, () => { pagination.value.pageIndex = 0 })
 const columnVisibility = ref<VisibilityState>(savedSettings?.visibility ?? {})
 const columnOrder = ref<ColumnOrderState>(savedSettings?.order ?? [])
 
@@ -202,6 +248,7 @@ const table = useVueTable({
     get sorting() { return sorting.value },
     get columnVisibility() { return columnVisibility.value },
     get columnOrder() { return columnOrder.value },
+    get pagination() { return pagination.value },
   },
   onSortingChange: (updater) => {
     sorting.value = typeof updater === 'function' ? updater(sorting.value) : updater
@@ -216,8 +263,12 @@ const table = useVueTable({
       ? updater(columnOrder.value)
       : updater
   },
+  onPaginationChange: (updater) => {
+    pagination.value = typeof updater === 'function' ? updater(pagination.value) : updater
+  },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
 })
 
 // ── 설정 저장 watch ──────────────────────────────────────────────
