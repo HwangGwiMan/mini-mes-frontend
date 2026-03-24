@@ -290,8 +290,10 @@ async function handleQuoteConfirm(payload: QuoteRequest) {
   try {
     if (editTarget.value) {
       await quoteApi.update(editTarget.value.id, payload)
+      showSuccess(`'${editTarget.value.name}' 이(가) 수정되었습니다.`)
     } else {
       await quoteApi.create(payload)
+      showSuccess('등록되었습니다.')
     }
     modalOpen.value = false
     await fetchData()

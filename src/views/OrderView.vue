@@ -134,8 +134,11 @@ import { itemApi } from '@/api/item'
 import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
+import { useToast } from '@/composables/useToast'
+import { extractSaveErrorMessage } from '@/types/api-error'
 
 const { initialize } = useScreenInit()
+const { showSuccess } = useToast()
 
 const partnerOptions = ref<{ value: string; label: string }[]>([])
 const employeeOptions = ref<{ value: string; label: string }[]>([])
@@ -204,19 +207,15 @@ async function handleOrderConfirm(payload: SalesOrderRequest) {
   try {
     if (editTarget.value) {
       await orderApi.update(editTarget.value.id, payload)
+      showSuccess(`'${editTarget.value.name}' 이(가) 수정되었습니다.`)
     } else {
       await orderApi.create(payload)
+      showSuccess('등록되었습니다.')
     }
     modalOpen.value = false
     await fetchData()
   } catch (err: unknown) {
-    const e = err as {
-      response?: { data?: { message?: string; errors?: { field: string; message: string }[] } }
-    }
-    modalError.value =
-      e.response?.data?.errors?.[0]?.message ??
-      e.response?.data?.message ??
-      '저장 중 오류가 발생했습니다.'
+    modalError.value = extractSaveErrorMessage(err)
   } finally {
     submitting.value = false
   }
