@@ -225,11 +225,11 @@
             </div>
 
             <div
-              v-if="errorMsg"
+              v-if="internalError || errorMsg"
               class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600"
             >
               <AlertCircle :size="14" class="shrink-0" />
-              <span>{{ errorMsg }}</span>
+              <span>{{ internalError || errorMsg }}</span>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
@@ -290,6 +290,8 @@ const emit = defineEmits<{
 }>()
 
 const isEdit = ref(false)
+// 클라이언트 사이드 검증 오류 — 서버 오류(errorMsg prop)와 별도 관리
+const internalError = ref('')
 const header = ref({
   orderNumber: '',
   orderDate: '',
@@ -306,6 +308,7 @@ watch(
   () => props.modelValue,
   (open) => {
     if (open) {
+      internalError.value = ''
       isEdit.value = !!props.initialData
       if (props.initialData) {
         header.value = {
@@ -369,7 +372,11 @@ function formatAmount(n: number): string {
 
 function handleSubmit() {
   const validLines = lines.value.filter((l) => l.itemId > 0 && (l.quantity || 0) > 0)
-  if (validLines.length === 0) return
+  if (validLines.length === 0) {
+    internalError.value = '품목이 선택된 수주 상세를 1개 이상 추가해야 합니다.'
+    return
+  }
+  internalError.value = ''
 
   const lineRequests: SalesOrderLineRequest[] = validLines.map((l, i) => ({
     itemId: l.itemId,

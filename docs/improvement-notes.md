@@ -13,12 +13,13 @@
 | 2 | ~~삭제 확인 다이얼로그 통일~~ ✅ | 🔴 높음 | UX |
 | 3 | ~~API 에러 응답 타입 중앙화~~ ✅ | 🔴 높음 | 타입 안전성 |
 | 4 | ~~성공 피드백 추가~~ ✅ | 🟡 중간 | UX |
-| 5 | 공통코드 옵션 캐싱 | 🟡 중간 | 성능 |
+| 5 | ~~공통코드 옵션 캐싱~~ ⛔ 보류 | 🟡 중간 | 성능 |
 | 6 | ~~`RevenueView` → `useCrudPage` 전환~~ ✅ | 🟡 중간 | 유지보수성 |
-| 7 | 클라이언트 사이드 입력 검증 | 🟡 중간 | UX |
+| 7 | ~~클라이언트 사이드 입력 검증~~ ✅ | 🟡 중간 | UX |
 | 8 | 컬럼 정의 패턴 통일 | 🔵 낮음 | 코드 일관성 |
 | 9 | 날짜 범위 검색 유효성 검사 | 🔵 낮음 | UX |
 | 10 | 페이지네이션 | 🔵 낮음 | 확장성 |
+| 11 | `BaseFormModal` 추상화 | 🔵 낮음 | 유지보수성 |
 
 ---
 
@@ -147,31 +148,16 @@ showSuccess('등록되었습니다.')
 
 ---
 
-## 5. 공통코드 옵션 캐싱 🟡
+## 5. 공통코드 옵션 캐싱 🟡 ⛔ 보류
 
 ### 문제
 
 `onMounted`마다 `commonCodeApi.search(groupCode)`를 호출하므로, 동일한 공통코드 그룹을 여러 화면에서 반복 조회한다. 특히 거래처 화면 → 수주 화면 이동 시 동일한 코드 목록을 중복 요청한다.
 
-### 개선 방향
+### 보류 사유
 
-Pinia store에 공통코드 캐시를 추가한다.
-
-```typescript
-// src/stores/commonCode.ts
-export const useCommonCodeStore = defineStore('commonCode', () => {
-  const cache = ref<Record<string, { value: string; label: string }[]>>({})
-
-  async function getOptions(groupCode: string) {
-    if (cache.value[groupCode]) return cache.value[groupCode]
-    const res = await commonCodeApi.search(groupCode)
-    cache.value[groupCode] = res.data.map(c => ({ value: c.code, label: c.name }))
-    return cache.value[groupCode]
-  }
-
-  return { getOptions }
-})
-```
+- 다른 사용자가 공통코드를 수정한 경우 캐시 무효화 방법이 없어 stale 데이터 노출 위험이 있다.
+- TTL 방식으로 절충할 수 있으나, 공통코드는 변경 빈도가 낮고 데이터량도 작아 캐싱 도입 대비 복잡도 증가가 더 크다.
 
 ---
 
@@ -187,7 +173,7 @@ export const useCommonCodeStore = defineStore('commonCode', () => {
 
 ---
 
-## 7. 클라이언트 사이드 입력 검증 🟡
+## 7. 클라이언트 사이드 입력 검증 🟡 ✅ 완료
 
 ### 문제
 
@@ -292,11 +278,50 @@ function handleSearch() {
 
 ---
 
+## 11. `BaseFormModal` 추상화 🔵
+
+### 문제
+
+`QuoteFormModal`, `OrderFormModal`, `RevenueFormModal`, `ShipmentFormModal` 5개 모달이 동일한 껍데기 코드(Teleport, Transition, 오버레이, 헤더, 에러 표시, 푸터 버튼)를 중복으로 가지고 있다. 모달 스타일이나 애니메이션 변경 시 5곳을 모두 수정해야 한다.
+
+### 개선 방향
+
+공통 껍데기를 `BaseFormModal.vue`로 추출하고 슬롯으로 폼 내용을 주입한다. 각 전용 모달은 도메인 로직만 소유하고 껍데기는 `BaseFormModal`에 위임한다.
+
+```vue
+<!-- BaseFormModal.vue — 공통 껍데기 -->
+<template>
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="modelValue" class="...overlay..." @mousedown.self="$emit('update:modelValue', false)">
+        <div class="...panel..." :class="panelClass">
+          <div class="header">
+            <slot name="title"><h3>{{ title }}</h3></slot>
+            <CloseButton @click="$emit('update:modelValue', false)" />
+          </div>
+          <form @submit.prevent="$emit('submit')" class="...">
+            <slot />
+            <ErrorMessage v-if="errorMsg" :message="errorMsg" />
+            <slot name="footer">
+              <ModalFooter :submitting :submit-disabled @cancel="$emit('update:modelValue', false)" />
+            </slot>
+          </form>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+```
+
+추가로 `QuoteFormModal`과 `OrderFormModal`의 라인 테이블 구조가 거의 동일하므로 `LineItemTable.vue` 공통 컴포넌트로 분리도 검토한다.
+
+---
+
 ## 참고: 현재 패턴 일관성 현황
 
 | 기능 | 패턴 | 일관성 | 품질 |
 |------|------|--------|------|
-| CRUD 목록 | `useCrudPage` + `DataTable` | 70% (RevenueView 미사용) | 높음 |
+| CRUD 목록 | `useCrudPage` + `DataTable` | 100% | 높음 |
 | 검색 | `SearchBar` + `reactive` | 100% | 중간 (디바운싱 없음) |
 | 폼 | `CrudModal` 또는 전용 모달 | 60% (혼용) | 중간~높음 |
 | 에러 처리 | 모달 + `alert()` + 없음 | 20% | 낮음 |

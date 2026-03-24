@@ -39,6 +39,8 @@ const emit = defineEmits<{
 
 const isEdit = computed(() => props.editTarget !== null)
 const title = computed(() => isEdit.value ? '매출 수정' : '매출 등록')
+// 클라이언트 사이드 검증 오류 — 서버 오류(error prop)와 별도 관리
+const internalError = ref('')
 
 // 헤더 폼
 const partnerId = ref<number | null>(null)
@@ -70,6 +72,7 @@ watch(
   () => props.modelValue,
   (open) => {
     if (!open) return
+    internalError.value = ''
     if (props.editTarget) {
       partnerId.value = props.editTarget.partnerId
       employeeId.value = props.editTarget.employeeId
@@ -130,7 +133,19 @@ function formatNumber(val: number) {
 }
 
 function handleSubmit() {
-  if (!partnerId.value || !revenueDate.value || lines.value.length === 0) return
+  if (!partnerId.value) {
+    internalError.value = '거래처를 선택해야 합니다.'
+    return
+  }
+  if (!revenueDate.value) {
+    internalError.value = '매출일자를 입력해야 합니다.'
+    return
+  }
+  if (lines.value.length === 0) {
+    internalError.value = '매출 품목을 1개 이상 추가해야 합니다.'
+    return
+  }
+  internalError.value = ''
 
   if (isEdit.value) {
     emit('confirm', {
@@ -336,7 +351,7 @@ function handleSubmit() {
             </div>
 
             <!-- 에러 메시지 -->
-            <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+            <p v-if="internalError || error" class="text-sm text-red-600">{{ internalError || error }}</p>
 
             <!-- 푸터 버튼 -->
             <div class="flex justify-end gap-2 pt-2">

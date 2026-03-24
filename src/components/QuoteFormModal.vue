@@ -201,11 +201,11 @@
             </div>
 
             <div
-              v-if="errorMsg"
+              v-if="internalError || errorMsg"
               class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600"
             >
               <AlertCircle :size="14" class="shrink-0" />
-              <span>{{ errorMsg }}</span>
+              <span>{{ internalError || errorMsg }}</span>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
@@ -266,6 +266,8 @@ const emit = defineEmits<{
 
 const isEdit = ref(false)
 const isSubmitted = computed(() => header.value.statusCode === 'QUOTE_STATUS_02')
+// 클라이언트 사이드 검증 오류 — 서버 오류(errorMsg prop)와 별도 관리
+const internalError = ref('')
 
 const header = ref({
   quoteNumber: '',
@@ -283,6 +285,7 @@ watch(
   () => props.modelValue,
   (open) => {
     if (open) {
+      internalError.value = ''
       isEdit.value = !!props.initialData
       if (props.initialData) {
         header.value = {
@@ -345,7 +348,13 @@ function formatAmount(n: number): string {
 function handleSubmit() {
   if (isSubmitted.value) return
   const validLines = lines.value.filter((l) => l.itemId > 0 && (l.quantity || 0) > 0)
-  if (validLines.length === 0) return
+  if (validLines.length === 0) {
+    // errorMsg는 부모에서 내려오는 prop이 아닌 내부 상태가 없으므로, 라인 검증은 저장 버튼 비활성화로 이미 처리됨
+    // 빈 라인만 있는 경우(itemId=0)는 사용자에게 명시적으로 안내
+    internalError.value = '품목이 선택된 견적 상세를 1개 이상 추가해야 합니다.'
+    return
+  }
+  internalError.value = ''
 
   const lineRequests: QuoteLineRequest[] = validLines.map((l, i) => ({
     itemId: l.itemId,
