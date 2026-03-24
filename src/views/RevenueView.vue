@@ -3,6 +3,10 @@
  * 거래처를 선택하고 해당 거래처의 완료 수주 품목을 골라 매출을 수동으로 등록한다.
  * 상태 흐름: 초안(등록·수정·삭제 가능) → 마감 → 취소
  * 마감 처리 후에는 수정·삭제가 불가하며 취소만 허용된다.
+ *
+ * useCrudPage 사용: rows/loading/submitting/modal 상태 및 등록·수정·삭제 핸들러를 composable로 위임.
+ * openEdit는 라인 항목 포함 상세 조회가 필요하므로 async로 오버라이드.
+ * 마감/취소 액션은 useCrudPage 범위 밖이므로 별도 상태로 관리.
  */
 <template>
   <div class="space-y-5">
@@ -109,6 +113,7 @@ import { revenueApi, type RevenueDto, type RevenueCreateRequest, type RevenueUpd
 import { commonCodeApi } from '@/api/commonCode'
 import { partnerApi, type PartnerDto } from '@/api/partner'
 import { useScreenInit } from '@/composables/useScreenInit'
+import { useCrudPage } from '@/composables/useCrudPage'
 import DataTable from '@/components/DataTable.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import RevenueFormModal from '@/components/RevenueFormModal.vue'
@@ -127,20 +132,27 @@ const search = reactive<Record<string, string>>({
   toDate: '',
 })
 
-// 테이블 데이터
-const rows = ref<RevenueDto[]>([])
-const loading = ref(false)
-
-// 모달 상태
-const modalOpen = ref(false)
-const submitting = ref(false)
-const modalError = ref('')
-const editTarget = ref<RevenueDto | null>(null)
-const deleteTarget = ref<RevenueDto | null>(null)
-
 // 검색 옵션
 const statusOptions = ref<{ value: string; label: string }[]>([])
 const partnerOptions = ref<PartnerDto[]>([])
+
+// useCrudPage: fetchFn은 search reactive를 클로저로 캡처하여 검색 파라미터를 반영
+// handleSave는 사용하지 않으므로 toPayload는 더미로 제공
+const {
+  rows, loading, submitting, modalOpen, modalError, editTarget, deleteTarget,
+  fetchData, openCreate, confirmDelete, handleDelete,
+} = useCrudPage<RevenueDto, RevenueCreateRequest | RevenueUpdateRequest>({
+  fetchFn: () => revenueApi.getAll({
+    statusCode: search.statusCode || undefined,
+    partnerId: search.partnerId ? Number(search.partnerId) : undefined,
+    fromDate: search.fromDate || undefined,
+    toDate: search.toDate || undefined,
+  }),
+  createFn: (data) => revenueApi.create(data as RevenueCreateRequest),
+  updateFn: (id, data) => revenueApi.update(id, data as RevenueUpdateRequest),
+  deleteFn: revenueApi.delete,
+  toPayload: () => ({}) as RevenueCreateRequest, // handleSave 미사용 — handleRevenueConfirm이 대신 처리
+})
 
 const searchFields = computed(() => [
   {
@@ -180,57 +192,41 @@ const columns: ColumnDef<RevenueDto>[] = [
   { accessorKey: 'remarks', header: '비고' },
 ]
 
-async function fetchData() {
-  loading.value = true
-  try {
-    const { data } = await revenueApi.getAll({
-      statusCode: search.statusCode || undefined,
-      partnerId: search.partnerId ? Number(search.partnerId) : undefined,
-      fromDate: search.fromDate || undefined,
-      toDate: search.toDate || undefined,
-    })
-    rows.value = data
-  } finally {
-    loading.value = false
-  }
-}
-
 function resetSearch() {
   Object.keys(search).forEach(k => (search[k] = ''))
   fetchData()
 }
 
-function openCreate() {
-  editTarget.value = null
-  modalError.value = ''
-  modalOpen.value = true
-}
-
+// useCrudPage의 openEdit는 동기(sync)이므로, 라인 항목 포함 상세 조회가 필요한 매출은 async로 오버라이드
 async function openEdit(row: RevenueDto) {
-  // 상세 조회(라인 포함)로 editTarget 설정
   const { data } = await revenueApi.getById(row.id)
   editTarget.value = data
   modalError.value = ''
   modalOpen.value = true
 }
 
-function confirmDelete(row: RevenueDto) {
-  deleteTarget.value = row
-}
-
-async function handleDelete() {
-  if (!deleteTarget.value) return
+// RevenueFormModal은 타입된 페이로드를 emit하므로 useCrudPage.handleSave(Record<string,string>) 대신 직접 처리
+async function handleRevenueConfirm(payload: RevenueCreateRequest | RevenueUpdateRequest) {
+  submitting.value = true
+  modalError.value = ''
   try {
-    await revenueApi.delete(deleteTarget.value.id)
-    showSuccess(`'${deleteTarget.value.revenueNumber}' 이(가) 삭제되었습니다.`)
-    deleteTarget.value = null
+    if (editTarget.value) {
+      await revenueApi.update(editTarget.value.id, payload as RevenueUpdateRequest)
+      showSuccess('매출이 수정되었습니다.')
+    } else {
+      await revenueApi.create(payload as RevenueCreateRequest)
+      showSuccess('매출이 등록되었습니다.')
+    }
+    modalOpen.value = false
     fetchData()
   } catch (err) {
-    showError(extractErrorMessage(err, '삭제 중 오류가 발생했습니다.'))
+    modalError.value = extractSaveErrorMessage(err)
+  } finally {
+    submitting.value = false
   }
 }
 
-// 마감 처리 확인 상태
+// 마감 처리 확인 상태 — useCrudPage 범위 밖의 상태 전이이므로 별도 관리
 const closeTarget = ref<RevenueDto | null>(null)
 const closeSubmitting = ref(false)
 
@@ -273,26 +269,6 @@ async function doHandleCancel() {
     showError(extractErrorMessage(err, '취소 처리 중 오류가 발생했습니다.'))
   } finally {
     cancelSubmitting.value = false
-  }
-}
-
-async function handleRevenueConfirm(payload: RevenueCreateRequest | RevenueUpdateRequest) {
-  submitting.value = true
-  modalError.value = ''
-  try {
-    if (editTarget.value) {
-      await revenueApi.update(editTarget.value.id, payload as RevenueUpdateRequest)
-      showSuccess('매출이 수정되었습니다.')
-    } else {
-      await revenueApi.create(payload as RevenueCreateRequest)
-      showSuccess('매출이 등록되었습니다.')
-    }
-    modalOpen.value = false
-    fetchData()
-  } catch (err) {
-    modalError.value = extractSaveErrorMessage(err)
-  } finally {
-    submitting.value = false
   }
 }
 

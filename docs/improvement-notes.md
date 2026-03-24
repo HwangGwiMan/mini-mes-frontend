@@ -14,7 +14,7 @@
 | 3 | ~~API 에러 응답 타입 중앙화~~ ✅ | 🔴 높음 | 타입 안전성 |
 | 4 | ~~성공 피드백 추가~~ ✅ | 🟡 중간 | UX |
 | 5 | 공통코드 옵션 캐싱 | 🟡 중간 | 성능 |
-| 6 | `RevenueView` → `useCrudPage` 전환 | 🟡 중간 | 유지보수성 |
+| 6 | ~~`RevenueView` → `useCrudPage` 전환~~ ✅ | 🟡 중간 | 유지보수성 |
 | 7 | 클라이언트 사이드 입력 검증 | 🟡 중간 | UX |
 | 8 | 컬럼 정의 패턴 통일 | 🔵 낮음 | 코드 일관성 |
 | 9 | 날짜 범위 검색 유효성 검사 | 🔵 낮음 | UX |
@@ -175,7 +175,7 @@ export const useCommonCodeStore = defineStore('commonCode', () => {
 
 ---
 
-## 6. `RevenueView` → `useCrudPage` 전환 🟡
+## 6. `RevenueView` → `useCrudPage` 전환 🟡 ✅ 완료
 
 ### 문제
 
