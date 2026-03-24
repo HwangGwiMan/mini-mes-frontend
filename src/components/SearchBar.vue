@@ -22,6 +22,8 @@
           @input="onInput(field.key, ($event.target as HTMLInputElement).value)"
           :type="field.type === 'date' ? 'date' : 'text'"
           :placeholder="field.placeholder ?? (field.type === 'date' ? 'yyyy-mm-dd' : `${field.label} 검색`)"
+          :max="field.key === 'fromDate' ? (modelValue.toDate || undefined) : undefined"
+          :min="field.key === 'toDate' ? (modelValue.fromDate || undefined) : undefined"
           class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           @keyup.enter="$emit('search')"
         />

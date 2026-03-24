@@ -17,7 +17,7 @@
 | 6 | ~~`RevenueView` → `useCrudPage` 전환~~ ✅ | 🟡 중간 | 유지보수성 |
 | 7 | ~~클라이언트 사이드 입력 검증~~ ✅ | 🟡 중간 | UX |
 | 8 | ~~컬럼 정의 패턴 통일~~ ✅ | 🔵 낮음 | 코드 일관성 |
-| 9 | 날짜 범위 검색 유효성 검사 | 🔵 낮음 | UX |
+| 9 | ~~날짜 범위 검색 유효성 검사~~ ✅ | 🔵 낮음 | UX |
 | 10 | 페이지네이션 | 🔵 낮음 | 확장성 |
 | 11 | `BaseFormModal` 추상화 | 🔵 낮음 | 유지보수성 |
 
@@ -249,19 +249,19 @@ const columns = computed(() => [
 
 ### 개선 방향
 
-`SearchBar`의 `@search` 핸들러 또는 컴포넌트 내부에서 날짜 범위를 검증한다.
+알람을 띄우는 대신, 입력 자체를 제한한다. `SearchBar`의 `date` 타입 필드에 `:min`/`:max` 속성을 동적으로 바인딩하여 역전된 날짜를 선택할 수 없게 만든다.
 
-```typescript
-function handleSearch() {
-  if (props.modelValue.fromDate && props.modelValue.toDate) {
-    if (props.modelValue.fromDate > props.modelValue.toDate) {
-      // 토스트 또는 인라인 메시지
-      showError('시작일은 종료일보다 이전이어야 합니다.')
-      return
-    }
-  }
-  emit('search')
-}
+- `fromDate` 필드: `:max="modelValue.toDate || undefined"` — 종료일 이후 선택 불가
+- `toDate` 필드: `:min="modelValue.fromDate || undefined"` — 시작일 이전 선택 불가
+
+`fromDate`/`toDate` 키 네이밍 컨벤션을 기준으로 자동 연결하면 모든 화면에 일괄 적용된다.
+
+```html
+<input
+  type="date"
+  :max="field.key === 'fromDate' ? (modelValue.toDate || undefined) : undefined"
+  :min="field.key === 'toDate' ? (modelValue.fromDate || undefined) : undefined"
+/>
 ```
 
 ---
