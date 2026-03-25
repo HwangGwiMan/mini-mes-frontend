@@ -16,6 +16,7 @@ import {
   BarChart3,
   Settings,
   Layers,
+  GitMerge,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -91,6 +92,13 @@ export const menus: MenuItem[] = [
         label: 'BOM 관리',
         path: '/bom',
         icon: Layers,
+      },
+      {
+        type: 'leaf',
+        key: 'routing',
+        label: '라우팅 관리',
+        path: '/routing',
+        icon: GitMerge,
       },
     ],
   },

@@ -85,6 +85,16 @@ const router = createRouter({
           name: 'bom-detail',
           component: () => import('@/views/BomDetailView.vue'),
         },
+        {
+          path: 'routing',
+          name: 'routing',
+          component: () => import('@/views/RoutingListView.vue'),
+        },
+        {
+          path: 'routing/:id',
+          name: 'routing-detail',
+          component: () => import('@/views/RoutingDetailView.vue'),
+        },
       ],
     },
   ],
