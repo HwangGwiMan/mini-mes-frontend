@@ -15,6 +15,7 @@ import {
   TrendingUp,
   BarChart3,
   Settings,
+  Layers,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -83,6 +84,13 @@ export const menus: MenuItem[] = [
         label: '공통코드 관리',
         path: '/common-code',
         icon: ListOrdered,
+      },
+      {
+        type: 'leaf',
+        key: 'bom',
+        label: 'BOM 관리',
+        path: '/bom',
+        icon: Layers,
       },
     ],
   },

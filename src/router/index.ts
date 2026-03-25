@@ -75,6 +75,16 @@ const router = createRouter({
           name: 'order-fulfillment',
           component: () => import('@/views/OrderFulfillmentView.vue'),
         },
+        {
+          path: 'bom',
+          name: 'bom',
+          component: () => import('@/views/BomListView.vue'),
+        },
+        {
+          path: 'bom/:id',
+          name: 'bom-detail',
+          component: () => import('@/views/BomDetailView.vue'),
+        },
       ],
     },
   ],
