@@ -95,6 +95,11 @@ const router = createRouter({
           name: 'routing-detail',
           component: () => import('@/views/RoutingDetailView.vue'),
         },
+        {
+          path: 'purchase-request',
+          name: 'purchase-request',
+          component: () => import('@/views/PurchaseRequestView.vue'),
+        },
       ],
     },
   ],

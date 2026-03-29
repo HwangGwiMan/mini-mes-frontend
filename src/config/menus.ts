@@ -17,6 +17,8 @@ import {
   Settings,
   Layers,
   GitMerge,
+  ShoppingBag,
+  ClipboardCheck,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -114,6 +116,21 @@ export const menus: MenuItem[] = [
       { type: 'leaf', key: 'shipment', label: '출하 관리', path: '/shipment', icon: PackageCheck },
       { type: 'leaf', key: 'revenue', label: '매출 관리', path: '/revenue', icon: TrendingUp },
       { type: 'leaf', key: 'order-fulfillment', label: '수주 이행 현황', path: '/order-fulfillment', icon: BarChart3 },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'purchase',
+    label: '구매 관리',
+    icon: ShoppingBag,
+    children: [
+      {
+        type: 'leaf',
+        key: 'purchase-request',
+        label: '구매 요청',
+        path: '/purchase-request',
+        icon: ClipboardCheck,
+      },
     ],
   },
   {
