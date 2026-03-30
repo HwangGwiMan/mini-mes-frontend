@@ -19,6 +19,7 @@ import {
   GitMerge,
   ShoppingBag,
   ClipboardCheck,
+  Warehouse,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -101,6 +102,13 @@ export const menus: MenuItem[] = [
         label: '라우팅 관리',
         path: '/routing',
         icon: GitMerge,
+      },
+      {
+        type: 'leaf',
+        key: 'warehouse',
+        label: '창고 관리',
+        path: '/warehouse',
+        icon: Warehouse,
       },
     ],
   },

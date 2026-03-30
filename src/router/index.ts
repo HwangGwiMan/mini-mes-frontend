@@ -96,6 +96,11 @@ const router = createRouter({
           component: () => import('@/views/RoutingDetailView.vue'),
         },
         {
+          path: 'warehouse',
+          name: 'warehouse',
+          component: () => import('@/views/WarehouseView.vue'),
+        },
+        {
           path: 'purchase-request',
           name: 'purchase-request',
           component: () => import('@/views/PurchaseRequestView.vue'),
