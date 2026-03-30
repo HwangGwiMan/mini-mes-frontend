@@ -105,6 +105,11 @@ const router = createRouter({
           name: 'purchase-request',
           component: () => import('@/views/PurchaseRequestView.vue'),
         },
+        {
+          path: 'purchase-order',
+          name: 'purchase-order',
+          component: () => import('@/views/PurchaseOrderView.vue'),
+        },
       ],
     },
   ],

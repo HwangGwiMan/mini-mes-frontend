@@ -194,6 +194,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Plus, Pencil, Trash2, ChevronDown, Send,
   CheckCircle, XCircle, ArrowRightFromLine, Eye,
@@ -212,6 +213,7 @@ import { useCrudPage } from '@/composables/useCrudPage'
 import { useToast } from '@/composables/useToast'
 import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
+const router = useRouter()
 const { showSuccess, showError } = useToast()
 
 const employeeOptions = ref<{ value: string; label: string }[]>([])
@@ -362,22 +364,14 @@ async function doReject() {
   }
 }
 
-// 발주 전환
+// 발주 전환 — PO 화면으로 이동하여 PR 데이터 pre-fill
 const convertTarget = ref<PurchaseRequestDto | null>(null)
 function handleConvertToPo(row: PurchaseRequestDto) { convertTarget.value = row }
-async function doConvertToPo() {
+function doConvertToPo() {
   if (!convertTarget.value) return
-  actionLoading.value = true
-  try {
-    await purchaseRequestApi.convertToPo(convertTarget.value.id)
-    convertTarget.value = null
-    showSuccess('구매 발주로 전환되었습니다.')
-    await fetchData()
-  } catch (err: unknown) {
-    showError(extractErrorMessage(err, '발주 전환 중 오류가 발생했습니다.'))
-  } finally {
-    actionLoading.value = false
-  }
+  const prId = convertTarget.value.id
+  convertTarget.value = null
+  router.push({ name: 'purchase-order', query: { fromPr: String(prId) } })
 }
 
 const columnHelper = createColumnHelper<PurchaseRequestDto>()

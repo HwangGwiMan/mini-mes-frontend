@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   ClipboardCheck,
   Warehouse,
+  FileSpreadsheet,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -138,6 +139,13 @@ export const menus: MenuItem[] = [
         label: '구매 요청',
         path: '/purchase-request',
         icon: ClipboardCheck,
+      },
+      {
+        type: 'leaf',
+        key: 'purchase-order',
+        label: '구매 발주',
+        path: '/purchase-order',
+        icon: FileSpreadsheet,
       },
     ],
   },
