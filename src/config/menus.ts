@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Warehouse,
   FileSpreadsheet,
+  PackageOpen,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -146,6 +147,13 @@ export const menus: MenuItem[] = [
         label: '구매 발주',
         path: '/purchase-order',
         icon: FileSpreadsheet,
+      },
+      {
+        type: 'leaf',
+        key: 'goods-receipt',
+        label: '자재 입고',
+        path: '/goods-receipt',
+        icon: PackageOpen,
       },
     ],
   },
