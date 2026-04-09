@@ -22,6 +22,8 @@ import {
   Warehouse,
   FileSpreadsheet,
   PackageOpen,
+  Archive,
+  PackageSearch,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -154,6 +156,21 @@ export const menus: MenuItem[] = [
         label: '자재 입고',
         path: '/goods-receipt',
         icon: PackageOpen,
+      },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'inventory',
+    label: '재고 관리',
+    icon: Archive,
+    children: [
+      {
+        type: 'leaf',
+        key: 'inventory',
+        label: '재고 원장',
+        path: '/inventory',
+        icon: PackageSearch,
       },
     ],
   },

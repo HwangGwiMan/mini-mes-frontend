@@ -115,6 +115,11 @@ const router = createRouter({
           name: 'goods-receipt',
           component: () => import('@/views/GoodsReceiptView.vue'),
         },
+        {
+          path: 'inventory',
+          name: 'inventory',
+          component: () => import('@/views/InventoryView.vue'),
+        },
       ],
     },
   ],
