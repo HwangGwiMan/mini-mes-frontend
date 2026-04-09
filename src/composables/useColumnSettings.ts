@@ -1,10 +1,13 @@
-import type { VisibilityState } from '@tanstack/vue-table'
+import { z } from 'zod'
 import { useAuthStore } from '@/stores/auth'
 
-export interface ColumnSettings {
-  visibility: VisibilityState
-  order: string[]
-}
+const ColumnSettingsSchema = z.object({
+  // VisibilityState = Record<string, boolean>
+  visibility: z.record(z.string(), z.boolean()),
+  order: z.array(z.string()),
+})
+
+export type ColumnSettings = z.infer<typeof ColumnSettingsSchema>
 
 export function useColumnSettings(tableId: string) {
   const auth = useAuthStore()
@@ -16,7 +19,10 @@ export function useColumnSettings(tableId: string) {
   function load(): ColumnSettings | null {
     try {
       const raw = localStorage.getItem(storageKey())
-      return raw ? (JSON.parse(raw) as ColumnSettings) : null
+      if (!raw) return null
+      const parsed = ColumnSettingsSchema.safeParse(JSON.parse(raw))
+      // 스키마 불일치 시 null 반환 → 호출부에서 기본 컬럼 설정으로 fallback
+      return parsed.success ? parsed.data : null
     } catch {
       return null
     }
