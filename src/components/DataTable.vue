@@ -67,9 +67,13 @@
     </div>
 
     <!-- 테이블 -->
-    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+    <div
+      ref="scrollContainer"
+      class="overflow-auto rounded-xl border border-gray-200 bg-white"
+      :style="{ height: containerHeight }"
+    >
       <table class="w-full text-sm">
-        <thead>
+        <thead class="sticky top-0 z-10">
           <tr class="border-b border-gray-200 bg-gray-50">
             <!-- 순번 컬럼 -->
             <th class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
@@ -99,7 +103,8 @@
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
+          <!-- 로딩 스켈레톤 -->
           <template v-if="loading">
             <tr v-for="i in 5" :key="i">
               <td :colspan="table.getFlatHeaders().length + 2" class="px-4 py-3">
@@ -107,7 +112,9 @@
               </td>
             </tr>
           </template>
-          <template v-else-if="table.getRowModel().rows.length === 0">
+
+          <!-- 빈 데이터 -->
+          <template v-else-if="allRows.length === 0">
             <tr>
               <td
                 :colspan="table.getFlatHeaders().length + 2"
@@ -117,17 +124,29 @@
               </td>
             </tr>
           </template>
+
+          <!-- 가상 스크롤: 상단 여백 -->
           <template v-else>
+            <tr v-if="virtualRows[0]?.start > 0" aria-hidden="true">
+              <td
+                :colspan="table.getFlatHeaders().length + 2"
+                :style="{ height: `${virtualRows[0].start}px`, padding: 0 }"
+              />
+            </tr>
+
+            <!-- 실제 렌더링 행 -->
             <tr
-              v-for="(row, rowIndex) in table.getRowModel().rows"
-              :key="row.id"
-              class="hover:bg-gray-50 transition-colors"
+              v-for="vRow in virtualRows"
+              :key="vRow.key"
+              :data-index="vRow.index"
+              :ref="el => rowVirtualizer.measureElement(el as Element)"
+              class="hover:bg-gray-50 transition-colors border-b border-gray-100"
             >
               <td class="px-4 py-3 text-gray-400 text-xs">
-                {{ pagination.pageIndex * pagination.pageSize + rowIndex + 1 }}
+                {{ vRow.index + 1 }}
               </td>
               <td
-                v-for="cell in row.getVisibleCells()"
+                v-for="cell in allRows[vRow.index].getVisibleCells()"
                 :key="cell.id"
                 class="px-4 py-3 text-gray-700"
               >
@@ -135,57 +154,26 @@
               </td>
               <td v-if="$slots.actions" class="px-4 py-3">
                 <div class="flex items-center gap-1.5">
-                  <slot name="actions" :row="row.original" />
+                  <slot name="actions" :row="allRows[vRow.index].original" />
                 </div>
               </td>
+            </tr>
+
+            <!-- 가상 스크롤: 하단 여백 -->
+            <tr v-if="paddingBottom > 0" aria-hidden="true">
+              <td
+                :colspan="table.getFlatHeaders().length + 2"
+                :style="{ height: `${paddingBottom}px`, padding: 0 }"
+              />
             </tr>
           </template>
         </tbody>
       </table>
     </div>
 
-    <!-- 하단 요약 + 페이지네이션 -->
-    <div class="mt-3 flex items-center justify-between text-xs text-gray-400">
-      <span>
-        전체 {{ props.data.length }}건
-        <template v-if="props.data.length > 0">
-          ({{ pagination.pageIndex * pagination.pageSize + 1 }}–{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, props.data.length) }})
-        </template>
-      </span>
-
-      <div class="flex items-center gap-3">
-        <!-- 페이지 크기 선택 -->
-        <div class="flex items-center gap-1.5">
-          <span>페이지당</span>
-          <select
-            :value="pagination.pageSize"
-            @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
-            class="border border-gray-200 rounded px-1.5 py-0.5 text-xs text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-          >
-            <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
-          </select>
-          <span>행</span>
-        </div>
-
-        <!-- 페이지 이동 -->
-        <div class="flex items-center gap-1">
-          <button
-            @click="table.previousPage()"
-            :disabled="!table.getCanPreviousPage()"
-            class="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft :size="14" />
-          </button>
-          <span class="px-1">{{ pagination.pageIndex + 1 }} / {{ table.getPageCount() || 1 }}</span>
-          <button
-            @click="table.nextPage()"
-            :disabled="!table.getCanNextPage()"
-            class="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight :size="14" />
-          </button>
-        </div>
-      </div>
+    <!-- 하단 요약 -->
+    <div class="mt-3 flex items-center text-xs text-gray-400">
+      <span>전체 {{ allRows.length }}건</span>
     </div>
   </div>
 </template>
@@ -195,17 +183,16 @@ import {
   useVueTable,
   getCoreRowModel,
   getSortedRowModel,
-  getPaginationRowModel,
   FlexRender,
   type ColumnDef,
   type SortingState,
   type VisibilityState,
   type ColumnOrderState,
   type Column,
-  type PaginationState,
 } from '@tanstack/vue-table'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { ChevronsUpDown, ChevronUp, ChevronDown, Settings2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronsUpDown, ChevronUp, ChevronDown, Settings2, GripVertical } from 'lucide-vue-next'
 import { useColumnSettings } from '@/composables/useColumnSettings'
 
 const props = defineProps<{
@@ -213,8 +200,11 @@ const props = defineProps<{
   columns: ColumnDef<T, any>[]
   loading?: boolean
   tableId?: string
-  pageSize?: number
+  /** 테이블 컨테이너 높이 (기본값: '600px') */
+  height?: string
 }>()
+
+const containerHeight = computed(() => props.height ?? '600px')
 
 // ── 설정 패널 열림/닫힘 ───────────────────────────────────────────
 const panelOpen = ref(false)
@@ -234,10 +224,6 @@ const savedSettings = colSettings?.load() ?? null
 
 // ── TanStack Table 상태 ──────────────────────────────────────────
 const sorting = ref<SortingState>([])
-const pagination = ref<PaginationState>({ pageIndex: 0, pageSize: props.pageSize ?? 20 })
-
-// 검색 결과가 바뀌면 첫 페이지로 리셋
-watch(() => props.data, () => { pagination.value.pageIndex = 0 })
 const columnVisibility = ref<VisibilityState>(savedSettings?.visibility ?? {})
 const columnOrder = ref<ColumnOrderState>(savedSettings?.order ?? [])
 
@@ -248,7 +234,6 @@ const table = useVueTable({
     get sorting() { return sorting.value },
     get columnVisibility() { return columnVisibility.value },
     get columnOrder() { return columnOrder.value },
-    get pagination() { return pagination.value },
   },
   onSortingChange: (updater) => {
     sorting.value = typeof updater === 'function' ? updater(sorting.value) : updater
@@ -263,12 +248,32 @@ const table = useVueTable({
       ? updater(columnOrder.value)
       : updater
   },
-  onPaginationChange: (updater) => {
-    pagination.value = typeof updater === 'function' ? updater(pagination.value) : updater
-  },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
+})
+
+// 필터/정렬이 적용된 전체 행 목록 (Virtual이 이 배열 기준으로 인덱싱)
+const allRows = computed(() => table.getRowModel().rows)
+
+// ── TanStack Virtual ─────────────────────────────────────────────
+const scrollContainer = ref<HTMLElement | null>(null)
+
+const rowVirtualizer = useVirtualizer(
+  computed(() => ({
+    count: allRows.value.length,
+    getScrollElement: () => scrollContainer.value,
+    estimateSize: () => 48,
+    overscan: 10,
+  }))
+)
+
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
+
+const paddingBottom = computed(() => {
+  const total = rowVirtualizer.value.getTotalSize()
+  const lastRow = virtualRows.value.at(-1)
+  if (!lastRow) return 0
+  return total - lastRow.end
 })
 
 // ── 설정 저장 watch ──────────────────────────────────────────────
