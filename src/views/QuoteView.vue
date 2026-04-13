@@ -441,10 +441,13 @@ onMounted(async () => {
     value: String(e.id),
     label: `${e.code} - ${e.name}`,
   }))
-  itemOptions.value = itemsRes.data.map((i: { id: number; code: string; name: string }) => ({
-    value: String(i.id),
-    label: `${i.code} - ${i.name}`,
-  }))
+  // 견적 품목은 완제품(ITEM_TYPE_03)만 등록 가능
+  itemOptions.value = itemsRes.data
+    .filter((i: { id: number; code: string; name: string; itemTypeCode: string }) => i.itemTypeCode === 'ITEM_TYPE_03')
+    .map((i: { id: number; code: string; name: string }) => ({
+      value: String(i.id),
+      label: `${i.code} - ${i.name}`,
+    }))
   statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
     value: c.code,
     label: c.name,
