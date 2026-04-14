@@ -24,6 +24,8 @@ import {
   PackageOpen,
   Archive,
   PackageSearch,
+  Factory,
+  Wrench,
 } from 'lucide-vue-next'
 
 export interface MenuLeaf {
@@ -171,6 +173,21 @@ export const menus: MenuItem[] = [
         label: '재고 원장',
         path: '/inventory',
         icon: PackageSearch,
+      },
+    ],
+  },
+  {
+    type: 'group',
+    key: 'production',
+    label: '생산 관리',
+    icon: Factory,
+    children: [
+      {
+        type: 'leaf',
+        key: 'work-order',
+        label: '작업지시',
+        path: '/work-order',
+        icon: Wrench,
       },
     ],
   },

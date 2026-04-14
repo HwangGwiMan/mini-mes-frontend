@@ -120,6 +120,11 @@ const router = createRouter({
           name: 'inventory',
           component: () => import('@/views/InventoryView.vue'),
         },
+        {
+          path: 'work-order',
+          name: 'work-order',
+          component: () => import('@/views/WorkOrderView.vue'),
+        },
       ],
     },
   ],
