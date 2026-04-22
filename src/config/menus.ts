@@ -1,3 +1,15 @@
+/**
+ * 사이드바 메뉴 정의.
+ *
+ * roles 필드로 메뉴별 접근 권한을 제어한다. roles를 지정하지 않으면 전체 공개.
+ * AppSidebar의 visibleMenus computed에서 authStore.role과 대조해 필터링한다.
+ * 그룹의 모든 자식이 숨겨지면 그룹 헤더도 자동으로 제거된다.
+ *
+ * 주의: 이 필터링은 UI 처리이며 URL 직접 접근을 막지 않는다.
+ * 라우터 레벨 가드는 별도로 추가해야 한다. (ADR-010 참고)
+ *
+ * @see docs/adr/010-menu-role-based-access.md
+ */
 import type { Component } from 'vue'
 import {
   LayoutDashboard,
@@ -34,6 +46,8 @@ export interface MenuLeaf {
   label: string
   path: string
   icon?: Component
+  /** 허용 역할 목록. 미지정 시 전체 공개 */
+  roles?: string[]
 }
 
 export interface MenuGroup {
@@ -41,6 +55,8 @@ export interface MenuGroup {
   key: string
   label: string
   icon?: Component
+  /** 허용 역할 목록. 미지정 시 전체 공개 */
+  roles?: string[]
   children: MenuLeaf[]
 }
 

@@ -157,6 +157,7 @@ import { RouterLink } from 'vue-router'
 import { useRoute } from 'vue-router'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { menus, type MenuGroup } from '@/config/menus'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{
   collapsed: boolean
@@ -167,9 +168,25 @@ defineEmits<{
 }>()
 
 const route = useRoute()
+const authStore = useAuthStore()
+
+/**
+ * 메뉴 항목의 roles와 현재 사용자 role을 대조한다.
+ * roles 미지정이면 전체 공개. URL 직접 접근은 막지 않는다. (ADR-010)
+ */
+function hasAccess(roles?: string[]): boolean {
+  if (!roles || roles.length === 0) return true
+  return !!authStore.role && roles.includes(authStore.role)
+}
 
 const visibleMenus = computed(() =>
-  menus.filter((item) => item.type !== 'group' || item.children.length > 0),
+  menus
+    .filter((item) => hasAccess(item.roles))
+    .map((item) => {
+      if (item.type !== 'group') return item
+      return { ...item, children: item.children.filter((child) => hasAccess(child.roles)) }
+    })
+    .filter((item) => item.type !== 'group' || item.children.length > 0),
 )
 
 // 현재 라우트에 해당하는 그룹을 기본 열림 상태로
