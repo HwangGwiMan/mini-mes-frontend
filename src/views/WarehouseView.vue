@@ -116,7 +116,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { warehouseApi, type WarehouseDto } from '@/api/warehouse'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 
@@ -254,9 +253,8 @@ function toFormData(dto: WarehouseDto): Record<string, string> {
 }
 
 onMounted(async () => {
-  await initialize()
-  const { data } = await commonCodeApi.search('WAREHOUSE_TYPE')
-  warehouseTypeOptions.value = data.map((c: { code: string; name: string }) => ({ value: c.code, label: c.name }))
+  const { getCode } = await initialize(['WAREHOUSE_TYPE'])
+  warehouseTypeOptions.value = getCode('WAREHOUSE_TYPE')
   await fetchData()
 })
 </script>

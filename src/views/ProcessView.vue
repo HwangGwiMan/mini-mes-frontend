@@ -110,7 +110,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { processApi, type ProcessDto } from '@/api/process'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 
@@ -214,9 +213,8 @@ function toFormData(dto: ProcessDto): Record<string, string> {
 }
 
 onMounted(async () => {
-  await initialize()
-  const { data } = await commonCodeApi.search('PROCESS_TYPE')
-  processTypeOptions.value = data.map((c: { code: string; name: string }) => ({ value: c.code, label: c.name }))
+  const { getCode } = await initialize(['PROCESS_TYPE'])
+  processTypeOptions.value = getCode('PROCESS_TYPE')
   await fetchData()
 })
 </script>

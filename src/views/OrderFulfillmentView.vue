@@ -195,7 +195,6 @@ import { orderFulfillmentApi, type OrderFulfillmentDto } from '@/api/orderFulfil
 import { shipmentApi, type ShipmentDto } from '@/api/shipment'
 import { revenueApi, type RevenueDto } from '@/api/revenue'
 import { partnerApi } from '@/api/partner'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 
 const { initialize } = useScreenInit()
@@ -422,24 +421,14 @@ function revenueStatusClass(code: string): string {
 
 // ── 초기화 ────────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await initialize()
-  const [partnersRes, orderStatusRes, shipmentStatusRes] = await Promise.all([
-    partnerApi.getAll(),
-    commonCodeApi.search('ORDER_STATUS'),
-    commonCodeApi.search('SHIPMENT_STATUS'),
-  ])
+  const { getCode } = await initialize(['ORDER_STATUS', 'SHIPMENT_STATUS'])
+  const partnersRes = await partnerApi.getAll()
   partnerOptions.value = partnersRes.data.map((p: { id: number; code: string; name: string }) => ({
     value: String(p.id),
     label: `${p.code} - ${p.name}`,
   }))
-  orderStatusOptions.value = orderStatusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
-  shipmentStatusOptions.value = shipmentStatusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  orderStatusOptions.value = getCode('ORDER_STATUS')
+  shipmentStatusOptions.value = getCode('SHIPMENT_STATUS')
   await fetchData()
 })
 </script>

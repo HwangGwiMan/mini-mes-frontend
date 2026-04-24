@@ -131,7 +131,6 @@ import { orderApi, type SalesOrderDto, type SalesOrderRequest } from '@/api/orde
 import { partnerApi } from '@/api/partner'
 import { employeeApi } from '@/api/employee'
 import { itemApi } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import { useToast } from '@/composables/useToast'
@@ -273,12 +272,11 @@ const detailSearchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  await initialize()
-  const [partnersRes, employeesRes, itemsRes, statusRes] = await Promise.all([
+  const { getCode } = await initialize(['ORDER_STATUS'])
+  const [partnersRes, employeesRes, itemsRes] = await Promise.all([
     partnerApi.getAll(),
     employeeApi.getAll(),
     itemApi.getAll(),
-    commonCodeApi.search('ORDER_STATUS'),
   ])
   partnerOptions.value = partnersRes.data.map((p: { id: number; code: string; name: string }) => ({
     value: String(p.id),
@@ -292,10 +290,7 @@ onMounted(async () => {
     value: String(i.id),
     label: `${i.code} - ${i.name}`,
   }))
-  statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  statusOptions.value = getCode('ORDER_STATUS')
   await fetchData()
 })
 </script>

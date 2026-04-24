@@ -140,8 +140,8 @@ import { goodsReceiptApi, type GoodsReceiptDto, type GoodsReceiptRequest } from 
 import { purchaseOrderApi } from '@/api/purchaseOrder'
 import { partnerApi } from '@/api/partner'
 import { itemApi } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useCrudPage } from '@/composables/useCrudPage'
+import { useScreenInit } from '@/composables/useScreenInit'
 import { useToast } from '@/composables/useToast'
 import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
@@ -188,6 +188,8 @@ const modalTitle = computed(() => {
   if (isDetailMode.value) return '자재 입고 상세'
   return '자재 입고 수정'
 })
+
+const { initialize } = useScreenInit()
 
 function openCreate() {
   editTarget.value = null
@@ -317,12 +319,11 @@ const searchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  const [partnersRes, itemsRes, poRes, statusRes, lineTypeRes] = await Promise.all([
+  const { getCode } = await initialize(['GR_STATUS', 'GR_LINE_TYPE'])
+  const [partnersRes, itemsRes, poRes] = await Promise.all([
     partnerApi.getAll(),
     itemApi.getAll(),
     purchaseOrderApi.getAll({ statusCode: 'PO_STATUS_02' }),
-    commonCodeApi.search('GR_STATUS'),
-    commonCodeApi.search('GR_LINE_TYPE'),
   ])
   partnerOptions.value = partnersRes.data.map((p: { id: number; code: string; name: string }) => ({
     value: String(p.id),
@@ -336,14 +337,8 @@ onMounted(async () => {
     value: String(po.id),
     label: po.orderNumber,
   }))
-  statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
-  lineTypeOptions.value = lineTypeRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  statusOptions.value = getCode('GR_STATUS')
+  lineTypeOptions.value = getCode('GR_LINE_TYPE')
 
   await fetchData()
 })

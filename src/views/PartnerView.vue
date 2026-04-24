@@ -77,7 +77,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { partnerApi, type PartnerDto } from '@/api/partner'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -189,9 +188,8 @@ function toFormData(dto: PartnerDto): Record<string, string> {
 }
 
 onMounted(async () => {
-  await initialize()
-  const { data } = await commonCodeApi.search('TRADE_TYPE')
-  tradeTypeOptions.value = data.map((c: { code: string; name: string }) => ({ value: c.code, label: c.name }))
+  const { getCode } = await initialize(['TRADE_TYPE'])
+  tradeTypeOptions.value = getCode('TRADE_TYPE')
   await fetchData()
 })
 </script>

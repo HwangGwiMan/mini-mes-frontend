@@ -77,7 +77,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { employeeApi, type EmployeeDto } from '@/api/employee'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -243,19 +242,9 @@ function toFormData(dto: EmployeeDto): Record<string, string> {
 }
 
 onMounted(async () => {
-  await initialize()
-  const [deptRes, positionRes] = await Promise.all([
-    commonCodeApi.search('DEPT'),
-    commonCodeApi.search('POSITION'),
-  ])
-  deptOptions.value = deptRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
-  positionOptions.value = positionRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  const { getCode } = await initialize(['DEPT', 'POSITION'])
+  deptOptions.value = getCode('DEPT')
+  positionOptions.value = getCode('POSITION')
   await fetchData()
 })
 </script>

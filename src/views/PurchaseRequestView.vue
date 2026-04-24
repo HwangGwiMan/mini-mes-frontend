@@ -208,8 +208,8 @@ import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { purchaseRequestApi, type PurchaseRequestDto, type PurchaseRequestRequest } from '@/api/purchaseRequest'
 import { employeeApi } from '@/api/employee'
 import { itemApi } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useCrudPage } from '@/composables/useCrudPage'
+import { useScreenInit } from '@/composables/useScreenInit'
 import { useToast } from '@/composables/useToast'
 import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
@@ -259,6 +259,8 @@ const {
   deleteFn: (id: number) => purchaseRequestApi.delete(id),
   toPayload: (x) => x as unknown as PurchaseRequestRequest,
 })
+
+const { initialize } = useScreenInit()
 
 /** 수정 — 상세 조회 후 모달 열기 (라인 포함) */
 async function openEdit(row: PurchaseRequestDto) {
@@ -420,10 +422,10 @@ const detailSearchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  const [employeesRes, itemsRes, statusRes] = await Promise.all([
+  const { getCode } = await initialize(['PR_STATUS'])
+  const [employeesRes, itemsRes] = await Promise.all([
     employeeApi.getAll(),
     itemApi.getAll(),
-    commonCodeApi.search('PR_STATUS'),
   ])
   employeeOptions.value = employeesRes.data.map((e: { id: number; code: string; name: string }) => ({
     value: String(e.id),
@@ -433,10 +435,7 @@ onMounted(async () => {
     value: String(i.id),
     label: `${i.code} - ${i.name}`,
   }))
-  statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  statusOptions.value = getCode('PR_STATUS')
   await fetchData()
 })
 </script>

@@ -189,7 +189,6 @@ import { orderApi } from '@/api/order'
 import { partnerApi } from '@/api/partner'
 import { employeeApi } from '@/api/employee'
 import { itemApi } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit, type CurrentUser } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import { useToast } from '@/composables/useToast'
@@ -426,12 +425,12 @@ const detailSearchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  currentUser.value = await initialize()
-  const [partnersRes, employeesRes, itemsRes, statusRes] = await Promise.all([
+  const { currentUser: user, getCode } = await initialize(['QUOTE_STATUS'])
+  currentUser.value = user
+  const [partnersRes, employeesRes, itemsRes] = await Promise.all([
     partnerApi.getAll(),
     employeeApi.getAll(),
     itemApi.getAll(),
-    commonCodeApi.search('QUOTE_STATUS'),
   ])
   partnerOptions.value = partnersRes.data.map((p: { id: number; code: string; name: string }) => ({
     value: String(p.id),
@@ -448,10 +447,7 @@ onMounted(async () => {
       value: String(i.id),
       label: `${i.code} - ${i.name}`,
     }))
-  statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  statusOptions.value = getCode('QUOTE_STATUS')
   await fetchData()
 })
 </script>

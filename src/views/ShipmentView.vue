@@ -105,7 +105,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import ShipmentFormModal from '@/components/ShipmentFormModal.vue'
 import ShipmentCompleteModal from '@/components/ShipmentCompleteModal.vue'
 import { shipmentApi, type ShipmentDto, type ShipmentUpdateRequest, type ShipmentCompleteRequest } from '@/api/shipment'
-import { commonCodeApi } from '@/api/commonCode'
 import { employeeApi } from '@/api/employee'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useToast } from '@/composables/useToast'
@@ -242,13 +241,10 @@ const resultColumns = computed(() => [
 ])
 
 onMounted(async () => {
-  await initialize()
-  const [empRes, statusRes] = await Promise.all([
-    employeeApi.getAll(),
-    commonCodeApi.search('SHIPMENT_STATUS'),
-  ])
+  const { getCode } = await initialize(['SHIPMENT_STATUS'])
+  const empRes = await employeeApi.getAll()
   employeeOptions.value = (empRes.data as any[]).map((e) => ({ value: String(e.id), label: e.code + ' ' + e.name }))
-  shipmentStatusOptions.value = (statusRes.data as any[]).map((c) => ({ value: c.code, label: c.name }))
+  shipmentStatusOptions.value = getCode('SHIPMENT_STATUS')
   await fetchData()
 })
 </script>

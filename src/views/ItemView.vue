@@ -77,7 +77,6 @@ import SearchBar from '@/components/SearchBar.vue'
 import type { FieldDef } from '@/components/CrudModal.vue'
 import type { SearchFieldDef } from '@/components/SearchBar.vue'
 import { itemApi, type ItemDto } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useScreenInit } from '@/composables/useScreenInit'
 import { useCrudPage } from '@/composables/useCrudPage'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -226,19 +225,9 @@ function toFormData(dto: ItemDto): Record<string, string> {
 }
 
 onMounted(async () => {
-  await initialize()
-  const [itemTypeRes, unitRes] = await Promise.all([
-    commonCodeApi.search('ITEM_TYPE'),
-    commonCodeApi.search('UNIT'),
-  ])
-  itemTypeOptions.value = itemTypeRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
-  unitOptions.value = unitRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  const { getCode } = await initialize(['ITEM_TYPE', 'UNIT'])
+  itemTypeOptions.value = getCode('ITEM_TYPE')
+  unitOptions.value = getCode('UNIT')
   await fetchData()
 })
 </script>

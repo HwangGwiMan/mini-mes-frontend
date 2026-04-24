@@ -140,8 +140,8 @@ import { purchaseOrderApi, type PurchaseOrderDto, type PurchaseOrderRequest } fr
 import { purchaseRequestApi } from '@/api/purchaseRequest'
 import { partnerApi } from '@/api/partner'
 import { itemApi } from '@/api/item'
-import { commonCodeApi } from '@/api/commonCode'
 import { useCrudPage } from '@/composables/useCrudPage'
+import { useScreenInit } from '@/composables/useScreenInit'
 import { useToast } from '@/composables/useToast'
 import { extractErrorMessage, extractSaveErrorMessage } from '@/types/api-error'
 
@@ -186,6 +186,8 @@ const modalTitle = computed(() => {
   if (isDetailMode.value) return '구매 발주 상세'
   return '구매 발주 수정'
 })
+
+const { initialize } = useScreenInit()
 
 function openCreate() {
   editTarget.value = null
@@ -357,10 +359,10 @@ const searchFields = computed<SearchFieldDef[]>(() => [
 ])
 
 onMounted(async () => {
-  const [partnersRes, itemsRes, statusRes] = await Promise.all([
+  const { getCode } = await initialize(['PO_STATUS'])
+  const [partnersRes, itemsRes] = await Promise.all([
     partnerApi.getAll(),
     itemApi.getAll(),
-    commonCodeApi.search('PO_STATUS'),
   ])
   partnerOptions.value = partnersRes.data.map((p: { id: number; code: string; name: string }) => ({
     value: String(p.id),
@@ -370,10 +372,7 @@ onMounted(async () => {
     value: String(i.id),
     label: `${i.code} - ${i.name}`,
   }))
-  statusOptions.value = statusRes.data.map((c: { code: string; name: string }) => ({
-    value: c.code,
-    label: c.name,
-  }))
+  statusOptions.value = getCode('PO_STATUS')
 
   // PR 전환 진입 처리
   const fromPr = route.query.fromPr
