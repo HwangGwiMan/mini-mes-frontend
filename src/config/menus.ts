@@ -205,6 +205,13 @@ export const menus: MenuItem[] = [
         path: '/work-order',
         icon: Wrench,
       },
+      {
+        type: 'leaf',
+        key: 'material-issue',
+        label: '자재 출고',
+        path: '/material-issue',
+        icon: PackageOpen,
+      },
     ],
   },
   {

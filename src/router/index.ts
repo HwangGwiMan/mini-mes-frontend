@@ -125,6 +125,11 @@ const router = createRouter({
           name: 'work-order',
           component: () => import('@/views/WorkOrderView.vue'),
         },
+        {
+          path: 'material-issue',
+          name: 'material-issue',
+          component: () => import('@/views/MaterialIssueView.vue'),
+        },
       ],
     },
   ],
