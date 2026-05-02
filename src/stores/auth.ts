@@ -8,6 +8,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useNotificationStore } from '@/stores/notification'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
@@ -29,6 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    useNotificationStore().disconnectSse()
     token.value = null
     username.value = null
     role.value = null

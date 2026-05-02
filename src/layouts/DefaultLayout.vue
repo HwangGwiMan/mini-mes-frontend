@@ -24,13 +24,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import AppToast from '@/components/AppToast.vue'
+import { useNotificationStore } from '@/stores/notification'
 
 const sidebarCollapsed = ref(false)
+const notificationStore = useNotificationStore()
+
+onMounted(() => {
+  notificationStore.loadNotifications()
+  notificationStore.connectSse()
+})
+
+onUnmounted(() => {
+  notificationStore.disconnectSse()
+})
 </script>
 
 <style scoped>

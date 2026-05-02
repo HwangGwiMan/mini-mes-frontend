@@ -21,10 +21,8 @@
 
     <!-- 우측 유저 영역 -->
     <div class="flex items-center gap-4">
-      <!-- 알림 버튼 (향후 확장) -->
-      <button class="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
-        <Bell :size="18" />
-      </button>
+      <!-- 알림 벨 -->
+      <NotificationBell />
 
       <!-- 유저 드롭다운 -->
       <div class="relative" ref="userMenuRef">
@@ -70,9 +68,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { ChevronDown, ChevronRight, Bell, LogOut } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { menus, type MenuLeaf } from '@/config/menus'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 const route = useRoute()
 const router = useRouter()
